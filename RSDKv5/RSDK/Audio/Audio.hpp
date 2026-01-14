@@ -78,6 +78,8 @@ void LoadSfx(char *filePath, uint8 plays, uint8 scope);
 #include "MiniAudio/MiniAudioDevice.hpp"
 #elif RETRO_AUDIODEVICE_SDL2
 #include "SDL2/SDL2AudioDevice.hpp"
+#elif RETRO_AUDIODEVICE_SDL3
+#include "SDL3/SDL3AudioDevice.hpp"
 #elif RETRO_AUDIODEVICE_OBOE
 #include "Oboe/OboeAudioDevice.hpp"
 #endif
