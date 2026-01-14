@@ -101,8 +101,14 @@ elseif(RETRO_SUBSYSTEM STREQUAL "SDL2")
         $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )
+elseif(RETRO_SUBSYSTEM STREQUAL "SDL3")
+    find_package(SDL3 CONFIG REQUIRED) # i ain't setting this up all the way
+    target_link_libraries(RetroEngine 
+        $<TARGET_NAME_IF_EXISTS:SDL3::SDL3main>
+        $<IF:$<TARGET_EXISTS:SDL3::SDL3>,SDL3::SDL3,SDL3::SDL3-static>
+    )
 else()
-    message(FATAL_ERROR "RETRO_SUBSYSTEM must be one of DX9, DX11, OGL, VK, or SDL2")
+    message(FATAL_ERROR "RETRO_SUBSYSTEM must be one of DX9, DX11, OGL, VK, SDL2, or SDL3")
 endif()
 
 if(USE_MINIAUDIO)

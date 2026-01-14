@@ -54,6 +54,9 @@ enum InputDeviceAPIs {
 #if RETRO_INPUTDEVICE_SDL2
     DEVICE_API_SDL2, // custom-made for SDL2 API, afaik it's not in original RSDKv5 (since it could be in a mac-version, but I do not have that so...)
 #endif
+#if RETRO_INPUTDEVICE_SDL3
+    DEVICE_API_SDL3, // custom-made for SDL3 API, afaik it's not in original RSDKv5 (since it could be in a mac-version, but I do not have that so...)
+#endif
 #if RETRO_INPUTDEVICE_GLFW
     DEVICE_API_GLFW, // custom-made for OGL, won't be in ANY real RSDKv5 version ever, it's just cool
 #endif
@@ -494,6 +497,10 @@ extern int32 gamePadCount;
 
 #if RETRO_INPUTDEVICE_SDL2
 #include "SDL2/SDL2InputDevice.hpp"
+#endif
+
+#if RETRO_INPUTDEVICE_SDL3
+#include "SDL3/SDL3InputDevice.hpp"
 #endif
 
 #if RETRO_INPUTDEVICE_GLFW
