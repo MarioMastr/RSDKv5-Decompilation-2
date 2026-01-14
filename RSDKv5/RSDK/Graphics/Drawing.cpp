@@ -135,6 +135,8 @@ const RenderVertex rsdkVertexBuffer[24] =
 #include "DX11/DX11RenderDevice.cpp"
 #elif RETRO_RENDERDEVICE_SDL2
 #include "SDL2/SDL2RenderDevice.cpp"
+#elif RETRO_RENDERDEVICE_SDL3
+#include "SDL3/SDL3RenderDevice.cpp"
 #elif RETRO_RENDERDEVICE_GLFW
 #include "GLFW/GLFWRenderDevice.cpp"
 #elif RETRO_RENDERDEVICE_VK
