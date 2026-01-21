@@ -1,35 +1,57 @@
+#pragma once
+
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
+
 #if RETRO_REV02
 
-struct SteamCore : UserCore {
+class SteamCallbacks
+{
+public:
+    STEAM_CALLBACK(SteamCallbacks, OnUserStatsReceived, UserStatsReceived_t);
+    STEAM_CALLBACK(SteamCallbacks, GameOverlayActivated, GameOverlayActivated_t);
+};
+
+extern SteamCallbacks* SteamCallbacksInstance;
+extern bool32 SteamUserStatsReceived;
+extern bool32 EnabledDLC[8];
+
+struct SteamCore : SKU::UserCore {
     void Shutdown()
     {
-        // closes steam API
+        SteamAPI_Shutdown();
     }
     bool32 CheckAPIInitialized()
     {
         // check if steam is running
-        return true;
+        return SteamAPI_IsSteamRunning();
     }
     bool32 CheckFocusLost()
     {
         // return field_38;
-        return false;
+        return focusState != 0;
     }
     void FrameInit()
     {
         UserCore::StageLoad();
-        // SteamAPI_RunCallbacks()
+        SteamAPI_RunCallbacks();
     }
     int32 GetUserLanguage()
     {
         // gets the language from steam
-        return LANGUAGE_EN;
+        return (int32)*SteamApps()->GetCurrentGameLanguage();
     }
     int32 GetUserRegion() { return REGION_US; }
     int32 GetUserPlatform() { return PLATFORM_PC; }
     bool32 GetConfirmButtonFlip() { return false; }
     void LaunchManual() {}
     void ExitGame() { RenderDevice::isRunning = false; }
+    bool32 CheckDLC(uint8 id)
+    {
+        if (id >= 0 && id <= 8)
+            return EnabledDLC[id];
+        return false;
+    }
     bool32 IsOverlayEnabled(uint32 overlay)
     {
         for (int32 i = 0; i < inputDeviceCount; ++i) {
@@ -45,8 +67,14 @@ struct SteamCore : UserCore {
     }
     bool32 ShowExtensionOverlay(uint8 overlay)
     {
-        // show steam overlay
-        return true;
+        switch (overlay)
+        {
+        case 0:
+            SteamFriends()->ActivateGameOverlayToWebPage("https://store.steampowered.com/app/845640/Sonic_Mania__Encore_DLC/");
+            return true;
+        default:
+            return false;
+        }
     }
 
     bool32 initialized = false;
