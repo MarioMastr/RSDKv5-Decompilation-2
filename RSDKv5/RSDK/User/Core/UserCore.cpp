@@ -74,6 +74,8 @@ void RSDK::SKU::InitUserCore()
     }
 #endif
 
+    if (!userCore) abort();
+
     if (!userDBStorage)
         userDBStorage = new UserDBStorage;
 #endif
