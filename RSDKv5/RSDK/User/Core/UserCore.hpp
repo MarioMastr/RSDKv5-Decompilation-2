@@ -1,5 +1,7 @@
-#ifndef USER_CORE_H
-#define USER_CORE_H
+#pragma once
+
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
 
 namespace RSDK
 {
@@ -206,5 +208,3 @@ inline void WriteText(FileIO *file, const char *string, ...)
 }
 
 } // namespace RSDK
-
-#endif // !USER_CORE_H

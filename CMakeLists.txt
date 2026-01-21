@@ -12,6 +12,8 @@ set(RETRO_MOD_LOADER_VER 2 CACHE STRING "Sets the mod loader version. Defaults t
 
 option(RETRO_DISABLE_LOG "Disables the log. Defaults to OFF." OFF)
 
+set(RETRO_USERCORE_ID 1 CACHE STRING "The user core backend that RSDKv5 will use. Defaults to Dummy = 3")
+
 set(RETRO_NAME "RSDKv5")
 
 if(RETRO_REVISION STREQUAL "3")
@@ -140,6 +142,16 @@ target_include_directories(RetroEngine PRIVATE
     dependencies/all/iniparser/
 )
 
+if (RETRO_USERCORE_ID STREQUAL "1")
+    target_include_directories(RetroEngine PRIVATE
+        dependencies/all/steam/include
+    )
+    target_link_directories(RetroEngine PRIVATE
+        dependencies/all/steam/lib
+    )
+    target_link_libraries(RetroEngine steam_api)
+endif()
+
 if(DEFINED DEP_PATH)
     target_include_directories(RetroEngine PRIVATE
         dependencies/${DEP_PATH}/
@@ -163,6 +175,8 @@ target_compile_definitions(RetroEngine PRIVATE
     RETRO_DISABLE_LOG=$<BOOL:${RETRO_DISABLE_LOG}>
     
     RETRO_DEV_EXTRA="${RETRO_SUBSYSTEM} - ${DECOMP_VERSION}"
+
+    RETRO_USERCORE_ID=${RETRO_USERCORE_ID}
 )
 
 if(WITH_RSDK)
@@ -184,5 +198,7 @@ if(WITH_RSDK)
         MANIA_PREPLUS=$<BOOL:${MANIA_PREPLUS}>
         MANIA_FIRST_RELEASE=$<BOOL:${MANIA_FIRST_RELEASE}>
         GAME_VERSION=${GAME_VERSION}
+
+        RETRO_USERCORE_ID=${RETRO_USERCORE_ID}
     )
 endif()
