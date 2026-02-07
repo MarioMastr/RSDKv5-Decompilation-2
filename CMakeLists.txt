@@ -12,7 +12,7 @@ set(RETRO_MOD_LOADER_VER 2 CACHE STRING "Sets the mod loader version. Defaults t
 
 option(RETRO_DISABLE_LOG "Disables the log. Defaults to OFF." OFF)
 
-set(RETRO_USERCORE_ID 1 CACHE STRING "The user core backend that RSDKv5 will use. Defaults to Dummy = 3")
+set(RETRO_USERCORE_ID 1 CACHE STRING "The user core backend that RSDKv5 will use. Defaults to Dummy = 0")
 
 set(RETRO_NAME "RSDKv5")
 
