@@ -4,21 +4,9 @@
 using namespace RSDK;
 
 #if RETRO_REV02
-struct SteamFileInfo {
-    void (*callback)(int32 status);
-    int32 type;
-    char path[64];
-    void *fileBuffer;
-    int32 fileSize;
-    int32 storageTime;
-    bool32 compressed;
-};
 
 struct SteamUserStorage : SKU::UserStorage {
     ISteamRemoteStorage *remoteStorage;
-    int32 authTime        = 0;
-    int32 storageInitTime = 0;
-    List<SteamFileInfo> fileList;
 
     int32 TryAuth()
     {
@@ -45,19 +33,20 @@ struct SteamUserStorage : SKU::UserStorage {
     {
         bool32 success = false;
 
-        if (!remoteStorage->FileExists(filename))
-            return false;
+        if (!remoteStorage->FileExists(filename)) {
+            PrintLog(PRINT_NORMAL, "File '%s' not found, creating...", filename);
+            TrySaveUserFile(filename, buffer, size, callback, false);
+        }
 
         if (!noSaveActive) {
-            SteamFileInfo *file = fileList.Append();
-            file->callback      = callback;
-            memset(file->path, 0, sizeof(file->path));
-            file->fileBuffer = buffer;
-            file->fileSize   = size;
-            file->type       = 1;
-            strncpy(file->path, filename, sizeof(file->path));
+            int32 bytes = remoteStorage->FileRead(filename, buffer, size);
+            if (bytes == 0) {
+                PrintLog(PRINT_ERROR, "Failed to load user file.");
+                return false;
+            }
 
-            remoteStorage->FileRead(filename, buffer, size);
+            if (callback)
+                callback(SKU::STATUS_OK);
 
             PrintLog(PRINT_NORMAL, "Loaded Replay DB");
 
@@ -81,6 +70,8 @@ struct SteamUserStorage : SKU::UserStorage {
         bool32 success = false;
         if (!noSaveActive) {
             success = remoteStorage->FileWrite(filename, buffer, size);
+            if (callback)
+                callback(SKU::STATUS_OK);
         }
         else {
             std::string str = __FILE__;
@@ -99,6 +90,8 @@ struct SteamUserStorage : SKU::UserStorage {
     {
         if (!noSaveActive) {
             remoteStorage->FileDelete(filename);
+            if (callback)
+                callback(SKU::STATUS_OK);
         }
         else {
             std::string str = __FILE__;
@@ -109,9 +102,9 @@ struct SteamUserStorage : SKU::UserStorage {
 
             if (callback)
                 callback(SKU::STATUS_ERROR);
-    }
+        }
 
-    return true;
+        return true;
     }
     void ClearPrerollErrors() {}
 };
