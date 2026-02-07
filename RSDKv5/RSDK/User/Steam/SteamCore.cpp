@@ -79,7 +79,6 @@ SKU::SteamCore *InitSteamCore()
     SteamErrMsg errMsg;
     if (SteamAPI_InitEx(&errMsg) != k_ESteamAPIInitResult_OK) {
         PrintLog(PRINT_ERROR, "Failed to initialise the Steam API: %s", errMsg);
-        abort();
         return nullptr;
     } else {
         SKU::SteamCallbacksInstance = new SteamCallbacks();

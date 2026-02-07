@@ -4,6 +4,7 @@
 using namespace RSDK;
 
 #if RETRO_REV02
+void CheckDLCs();
 
 class SteamCallbacks
 {
@@ -48,9 +49,7 @@ struct SteamCore : SKU::UserCore {
     void ExitGame() { RenderDevice::isRunning = false; }
     bool32 CheckDLC(uint8 id)
     {
-        if (id >= 0 && id <= 8)
-            return EnabledDLC[id];
-        return false;
+        return SteamApps()->BIsSubscribedApp(845640);
     }
     bool32 IsOverlayEnabled(uint32 overlay)
     {
