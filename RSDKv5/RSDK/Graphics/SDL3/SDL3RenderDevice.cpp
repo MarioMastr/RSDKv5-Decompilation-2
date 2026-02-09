@@ -1,6 +1,9 @@
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
 
 SDL_Window *RenderDevice::window     = nullptr;
 SDL_Renderer *RenderDevice::renderer = nullptr;
+SDL_GPUDevice *RenderDevice::device  = nullptr;
 SDL_Texture *RenderDevice::screenTexture[SCREEN_COUNT];
 
 SDL_Texture *RenderDevice::imageTexture = nullptr;
@@ -95,6 +98,15 @@ void RenderDevice::CopyFrameBuffer()
 
 void RenderDevice::FlipScreen()
 {
+    if (lastShaderID != videoSettings.shaderID) {
+        lastShaderID = videoSettings.shaderID;
+
+        SetLinear(shaderList[videoSettings.shaderID].linear);
+
+        if (videoSettings.shaderSupport)
+            SDL_SetGPURenderState(renderer, shaderList[videoSettings.shaderID].renderState);
+    }
+
     if (windowRefreshDelay > 0) {
         windowRefreshDelay--;
         if (!windowRefreshDelay)
@@ -109,92 +121,6 @@ void RenderDevice::FlipScreen()
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
     SDL_RenderClear(renderer);
 
-/*
-#if (SDL_VERSION >= SDL_VERSIONNUM(3, 2, 0))
-    int32 startVert = 0;
-    switch (videoSettings.screenCount) {
-        default:
-        case 0:
-#if RETRO_REV02
-            startVert = 54;
-#else
-            startVert = 18;
-#endif
-            SDL_RenderGeometryRaw(renderer, imageTexture, &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-            break;
-
-        case 1:
-            startVert = 0;
-            SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-            break;
-
-        case 2:
-#if RETRO_REV02
-            startVert = startVertex_2P[0];
-#else
-            startVert = 6;
-#endif
-            SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-#if RETRO_REV02
-            startVert = startVertex_2P[1];
-#else
-            startVert = 12;
-#endif
-            SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-            break;
-
-#if RETRO_REV02
-        case 3:
-            startVert = startVertex_3P[0];
-            SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-            startVert = startVertex_3P[1];
-            SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-            startVert = startVertex_3P[2];
-            SDL_RenderGeometryRaw(renderer, screenTexture[2], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-            break;
-
-        case 4:
-            startVert = 30;
-            SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-            startVert = 36;
-            SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-            startVert = 42;
-            SDL_RenderGeometryRaw(renderer, screenTexture[2], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-
-            startVert = 48;
-            SDL_RenderGeometryRaw(renderer, screenTexture[3], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
-                                  sizeof(RenderVertex), 6, NULL, 0, 0);
-            break;
-#endif
-    }
-#else
-*/
     int32 startVert = 0;
     SDL_FRect src, dst;
 
@@ -293,11 +219,15 @@ void RenderDevice::FlipScreen()
             break;
 #endif
     }
-// #endif
+    
     if (dimAmount < 1.0f) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
         SDL_RenderFillRect(renderer, NULL);
     }
+
+    if (videoSettings.shaderSupport)
+        SDL_SetGPURenderState(renderer, nullptr);
+
     // no change here
     SDL_RenderPresent(renderer);
 }
@@ -309,6 +239,15 @@ void RenderDevice::Release(bool32 isRefresh)
             SDL_DestroyTexture(screenTexture[s]);
         screenTexture[s] = NULL;
     }
+
+    for (int32 i = 0; i < shaderCount; ++i) {
+        SDL_DestroyGPURenderState(shaderList[i].renderState);
+    }
+
+    shaderCount = 0;
+#if RETRO_USE_MOD_LOADER
+    userShaderCount = 0;
+#endif
 
     if (imageTexture)
         SDL_DestroyTexture(imageTexture);
@@ -322,6 +261,9 @@ void RenderDevice::Release(bool32 isRefresh)
 
     if (!isRefresh && renderer)
         SDL_DestroyRenderer(renderer);
+
+    if (!isRefresh && device)
+        SDL_DestroyGPUDevice(device);
 
     if (!isRefresh && window)
         SDL_DestroyWindow(window);
@@ -444,8 +386,6 @@ void RenderDevice::InitVertexBuffer()
 
 bool RenderDevice::InitGraphicsAPI()
 {
-    videoSettings.shaderSupport = false;
-
     viewSize.x = 0;
     viewSize.y = 0;
 
@@ -550,10 +490,143 @@ bool RenderDevice::InitGraphicsAPI()
     return true;
 }
 
-void RenderDevice::LoadShader(const char *fileName, bool32 linear) { PrintLog(PRINT_NORMAL, "This render device does not support shaders!"); }
+void RenderDevice::LoadShader(const char *fileName, bool32 linear)
+{
+    char fullFilePath[0x100];
+    FileInfo info;
+
+    for (int32 i = 0; i < shaderCount; ++i) {
+        if (strcmp(shaderList[i].name, fileName) == 0)
+            return;
+    }
+
+    if (shaderCount == SHADER_COUNT)
+        return;
+
+    ShaderEntry *shader = &shaderList[shaderCount];
+    sprintf_s(shader->name, sizeof(shader->name), "%s", fileName);
+
+    if (std::string(shader->name) == "None") {
+        shader->renderState = nullptr;
+        return;
+    }
+
+    shader->linear = linear;
+
+    SDL_GPUShaderFormat formats = SDL_GetGPUShaderFormats(device);
+    if (formats == SDL_GPU_SHADERFORMAT_INVALID) {
+        SDL_Log("Couldn't get supported shader formats: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_GPUShader *gpuShader = nullptr;
+    SDL_GPUShaderCreateInfo shaderInfo;
+    SDL_zero(shaderInfo);
+
+    if (formats & SDL_GPU_SHADERFORMAT_SPIRV) {
+        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/SPIRV/%s.frag", fileName);
+        InitFileInfo(&info);
+        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
+            uint8 *fileData = NULL;
+            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
+            ReadBytes(&info, fileData, info.fileSize);
+            fileData[info.fileSize] = 0;
+            CloseFile(&info);
+
+            shaderInfo = {
+                sizeof(fileData),
+                fileData,
+                "main",
+                SDL_GPU_SHADERFORMAT_SPIRV,
+                SDL_GPU_SHADERSTAGE_FRAGMENT,
+            };
+
+            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
+
+            if (!gpuShader) {
+                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
+                return;
+            }
+        }
+    }
+    else if (formats & SDL_GPU_SHADERFORMAT_DXIL) {
+        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/DXIL/%s.frag", fileName);
+        InitFileInfo(&info);
+        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
+            uint8 *fileData = NULL;
+            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
+            ReadBytes(&info, fileData, info.fileSize);
+            fileData[info.fileSize] = 0;
+            CloseFile(&info);
+
+            shaderInfo = {
+                sizeof(fileData),
+                fileData,
+                "main",
+                SDL_GPU_SHADERFORMAT_DXIL,
+                SDL_GPU_SHADERSTAGE_FRAGMENT,
+            };
+
+            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
+
+            if (!gpuShader) {
+                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
+                return;
+            }
+        }
+    }
+    else if (formats & SDL_GPU_SHADERFORMAT_MSL) {
+        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/MSL/%s.frag", fileName);
+        InitFileInfo(&info);
+        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
+            uint8 *fileData = NULL;
+            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
+            ReadBytes(&info, fileData, info.fileSize);
+            fileData[info.fileSize] = 0;
+            CloseFile(&info);
+
+            shaderInfo = {
+                sizeof(fileData),
+                fileData,
+                "main0",
+                SDL_GPU_SHADERFORMAT_MSL,
+                SDL_GPU_SHADERSTAGE_FRAGMENT,
+            };
+
+            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
+
+            if (!gpuShader) {
+                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
+                return;
+            }
+        }
+    }
+
+    SDL_GPURenderStateCreateInfo rsInfo = {
+        gpuShader,
+    };
+
+    SDL_GPURenderState *gpuState = SDL_CreateGPURenderState(renderer, &rsInfo);
+
+    float2 uniforms;
+    SDL_zero(uniforms);
+    uniforms.x = textureSize.x;
+    uniforms.y = textureSize.y;
+    if (!SDL_SetGPURenderStateFragmentUniforms(gpuState, 0, &uniforms, sizeof(uniforms))) {
+        SDL_Log("Couldn't set uniform data: %s", SDL_GetError());
+        return;
+    }
+
+    shader->renderState = gpuState;
+
+    SDL_ReleaseGPUShader(device, gpuShader);
+
+    shaderCount++;
+}
 
 bool RenderDevice::InitShaders()
 {
+    videoSettings.shaderSupport = true;
     int32 maxShaders = 0;
 #if RETRO_USE_MOD_LOADER
     // who knows maybe SDL3 will have shaders
@@ -593,10 +666,17 @@ bool RenderDevice::InitShaders()
 
 bool RenderDevice::SetupRendering()
 {
-    renderer = SDL_CreateRenderer(window, NULL);
+    device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL, false, NULL);
+
+    if (!device) {
+        PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU device: %s", SDL_GetError());
+        return false;
+    }
+    
+    renderer = SDL_CreateGPURenderer(device, window);
 
     if (!renderer) {
-        PrintLog(PRINT_NORMAL, "ERROR: failed to create renderer!");
+        PrintLog(PRINT_NORMAL, "ERROR: failed to create renderer: %s", SDL_GetError());
         return false;
     }
 
@@ -1082,18 +1162,49 @@ void RenderDevice::SetupImageTexture(int32 width, int32 height, uint8 *imagePixe
 void RenderDevice::SetupVideoTexture_YUV420(int32 width, int32 height, uint8 *yPlane, uint8 *uPlane, uint8 *vPlane, int32 strideY, int32 strideU,
                                             int32 strideV)
 {
-    if (lastTextureFormat != SHADER_YUV_420) {
-        if (imageTexture)
-            SDL_DestroyTexture(imageTexture);
-        SDL_SetTextureScaleMode(imageTexture, SDL_SCALEMODE_LINEAR);
+    uint32 *pixels = nullptr;
+    int32 pitch    = 0;
 
-        imageTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, width, height);
+    SDL_LockTexture(imageTexture, NULL, (void **)&pixels, &pitch);
 
-        SDL_SetTextureScaleMode(imageTexture, SDL_SCALEMODE_NEAREST);
-        lastTextureFormat = SHADER_YUV_420;
+    uint32 *preY   = pixels;
+
+    if (videoSettings.shaderSupport) {
+        for (int32 y = 0; y < height; ++y) {
+            for (int32 x = 0; x < width; ++x) {
+                *pixels++ = (yPlane[x] << 16) | 0xFF000000;
+            }
+
+            pixels += pitch;
+            yPlane += strideY;
+        }
+
+        pixels = preY;
+        pitch  = RETRO_VIDEO_TEXTURE_W - (width >> 1);
+        for (int32 y = 0; y < (height >> 1); ++y) {
+            for (int32 x = 0; x < (width >> 1); ++x) {
+                *pixels++ |= (vPlane[x] << 0) | (uPlane[x] << 8) | 0xFF000000;
+            }
+
+            pixels += pitch;
+            uPlane += strideU;
+            vPlane += strideV;
+        }
+    }
+    else {
+        // No shader support means no YUV support! at least use the brightness to show it in grayscale!
+        for (int32 y = 0; y < height; ++y) {
+            for (int32 x = 0; x < width; ++x) {
+                int32 brightness = yPlane[x];
+                *pixels++        = (brightness << 0) | (brightness << 8) | (brightness << 16) | 0xFF000000;
+            }
+
+            pixels += pitch;
+            yPlane += strideY;
+        }
     }
 
-    SDL_UpdateYUVTexture(imageTexture, NULL, yPlane, strideY, uPlane, strideU, vPlane, strideV);
+    SDL_UnlockTexture(imageTexture);
 }
 void RenderDevice::SetupVideoTexture_YUV422(int32 width, int32 height, uint8 *yPlane, uint8 *uPlane, uint8 *vPlane, int32 strideY, int32 strideU,
                                             int32 strideV)
@@ -1126,4 +1237,11 @@ void RenderDevice::SetupVideoTexture_YUV444(int32 width, int32 height, uint8 *yP
     }
 
     SDL_UpdateYUVTexture(imageTexture, NULL, yPlane, strideY, uPlane, strideU, vPlane, strideV);
+}
+
+void RenderDevice::SetLinear(bool32 linear)
+{
+    for (int32 i = 0; i < SCREEN_COUNT; ++i) {
+        SDL_SetTextureScaleMode(screenTexture[i], linear ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST);
+    }
 }
