@@ -5,18 +5,24 @@ using namespace RSDK;
 
 SKU::SteamCallbacks* SteamCallbacksInstance = nullptr;
 bool32 SteamUserStatsReceived = false;
-bool32 EnabledDLC[8];
 
-void CheckDLCs()
+bool32 CheckDLCs()
 {
-    for (int i = 0; i < 8; ++i) {
-        switch (i) {
-            case 0:
-                EnabledDLC[i] = SteamApps()->BIsSubscribedApp(845640);
-            default:
-                EnabledDLC[i] = false;
-        }
-    } 
+    AppId_t gameID;
+    switch (engine.version) {
+        default:
+        case 5:
+            gameID = 845640;
+            break;
+#if RETRO_REV0U
+        case 4:
+        case 3:
+            gameID = 2343200;
+            break;
+#endif
+    }
+
+    return SteamApps()->BIsSubscribedApp(gameID);
 }
 
 void SKU::SteamCallbacks::OnUserStatsReceived(UserStatsReceived_t* pCallback)
@@ -52,28 +58,32 @@ SKU::SteamCore *InitSteamCore()
 #if RETRO_USERCORE_STEAM
     sprintf(pathBuffer, "%s%s", rootDir, "steam_appid.txt");
 
-    FileIO *f;
-    if ((f = fOpen(pathBuffer, "w")) == NULL) {
-        PrintLog(PRINT_ERROR, "ERROR: Couldn't open file '%s' for writing!", "steam_appid.txt");
-        return nullptr;
+    if (fOpen(pathBuffer, "r") == NULL) {
+        FileIO *f;
+        if ((f = fOpen(pathBuffer, "w")) == NULL) { 
+            PrintLog(PRINT_ERROR, "ERROR: Couldn't open file '%s' for writing!", "steam_appid.txt");
+            return nullptr;
+        }
+
+        const char *gameID;
+
+        switch (engine.version) {
+            default:
+            case 5:
+                gameID = "584400\n";
+                break;
+#if RETRO_REV0U
+            case 4:
+            case 3:
+                gameID = "1794960\n";
+                break;
+#endif
+        }
+
+        fWrite(gameID, 1, strlen(gameID), f);
+
+        fClose(f);
     }
-
-    const char *gameID;
-
-    switch (engine.version) {
-        default:
-        case 5:
-            gameID = "584400\n";
-            break;
-        case 4:
-        case 3:
-            gameID = "1794960\n";
-            break;
-    }
-
-    fWrite(gameID, 1, strlen(gameID), f);
-
-    fClose(f);
 #endif
 
     SteamErrMsg errMsg;
