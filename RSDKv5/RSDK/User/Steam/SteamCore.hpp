@@ -4,7 +4,7 @@
 using namespace RSDK;
 
 #if RETRO_REV02
-void CheckDLCs();
+bool32 CheckDLCs();
 
 class SteamCallbacks
 {
@@ -15,7 +15,6 @@ public:
 
 extern SteamCallbacks* SteamCallbacksInstance;
 extern bool32 SteamUserStatsReceived;
-extern bool32 EnabledDLC[8];
 
 struct SteamCore : SKU::UserCore {
     void Shutdown()
@@ -49,7 +48,7 @@ struct SteamCore : SKU::UserCore {
     void ExitGame() { RenderDevice::isRunning = false; }
     bool32 CheckDLC(uint8 id)
     {
-        return SteamApps()->BIsSubscribedApp(845640);
+        return CheckDLCs();
     }
     bool32 IsOverlayEnabled(uint32 overlay)
     {
@@ -66,14 +65,8 @@ struct SteamCore : SKU::UserCore {
     }
     bool32 ShowExtensionOverlay(uint8 overlay)
     {
-        switch (overlay)
-        {
-        case 0:
-            SteamFriends()->ActivateGameOverlayToWebPage("https://store.steampowered.com/app/845640/Sonic_Mania__Encore_DLC/");
-            return true;
-        default:
-            return false;
-        }
+        SteamFriends()->ActivateGameOverlayToWebPage("https://store.steampowered.com/app/845640/Sonic_Mania__Encore_DLC/");
+        return true;
     }
 
     bool32 initialized = false;
