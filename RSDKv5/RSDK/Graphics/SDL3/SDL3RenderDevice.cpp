@@ -11,6 +11,8 @@ SDL_Texture *RenderDevice::imageTexture = nullptr;
 uint32 RenderDevice::displayModeIndex = 0;
 int32 RenderDevice::displayModeCount  = 0;
 
+RenderDevice::RSDKBuffer RenderDevice::uniformBuffer = {};
+
 unsigned long long RenderDevice::targetFreq = 0;
 unsigned long long RenderDevice::curTicks   = 0;
 unsigned long long RenderDevice::prevTicks  = 0;
@@ -98,15 +100,6 @@ void RenderDevice::CopyFrameBuffer()
 
 void RenderDevice::FlipScreen()
 {
-    if (lastShaderID != videoSettings.shaderID) {
-        lastShaderID = videoSettings.shaderID;
-
-        SetLinear(shaderList[videoSettings.shaderID].linear);
-
-        if (videoSettings.shaderSupport)
-            SDL_SetGPURenderState(renderer, shaderList[videoSettings.shaderID].renderState);
-    }
-
     if (windowRefreshDelay > 0) {
         windowRefreshDelay--;
         if (!windowRefreshDelay)
@@ -120,6 +113,16 @@ void RenderDevice::FlipScreen()
     // pillarboxes in fullscreen from displaying garbage data.
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
     SDL_RenderClear(renderer);
+
+    if (lastShaderID != videoSettings.shaderID) {
+        lastShaderID = videoSettings.shaderID;
+
+        SetLinear(shaderList[videoSettings.shaderID].linear);
+
+        if (videoSettings.shaderSupport)
+            SDL_SetGPURenderState(renderer, shaderList[videoSettings.shaderID].renderState);
+    }
+
 
     int32 startVert = 0;
     SDL_FRect src, dst;
@@ -220,13 +223,13 @@ void RenderDevice::FlipScreen()
 #endif
     }
     
+    if (videoSettings.shaderSupport)
+        SDL_SetGPURenderState(renderer, nullptr);
+
     if (dimAmount < 1.0f) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
         SDL_RenderFillRect(renderer, NULL);
     }
-
-    if (videoSettings.shaderSupport)
-        SDL_SetGPURenderState(renderer, nullptr);
 
     // no change here
     SDL_RenderPresent(renderer);
@@ -240,9 +243,8 @@ void RenderDevice::Release(bool32 isRefresh)
         screenTexture[s] = NULL;
     }
 
-    for (int32 i = 0; i < shaderCount; ++i) {
+    for (int32 i = 0; i < shaderCount; ++i)
         SDL_DestroyGPURenderState(shaderList[i].renderState);
-    }
 
     shaderCount = 0;
 #if RETRO_USE_MOD_LOADER
@@ -490,6 +492,21 @@ bool RenderDevice::InitGraphicsAPI()
     return true;
 }
 
+void RenderDevice::UploadData()
+{
+    uniformBuffer.pixelSize = pixelSize;
+    uniformBuffer.textureSize = textureSize;
+    uniformBuffer.viewSize = viewSize;
+#if RETRO_REV02
+    uniformBuffer.screenDim = videoSettings.dimMax * videoSettings.dimPercent;
+#endif
+
+    if (!SDL_SetGPURenderStateFragmentUniforms(shaderList[videoSettings.shaderID].renderState, 1, &uniformBuffer, sizeof(RSDKBuffer))) {
+        SDL_Log("Couldn't set uniform data: %s", SDL_GetError());
+        return;
+    }
+}
+
 void RenderDevice::LoadShader(const char *fileName, bool32 linear)
 {
     char fullFilePath[0x100];
@@ -506,11 +523,6 @@ void RenderDevice::LoadShader(const char *fileName, bool32 linear)
     ShaderEntry *shader = &shaderList[shaderCount];
     sprintf_s(shader->name, sizeof(shader->name), "%s", fileName);
 
-    if (std::string(shader->name) == "None") {
-        shader->renderState = nullptr;
-        return;
-    }
-
     shader->linear = linear;
 
     SDL_GPUShaderFormat formats = SDL_GetGPUShaderFormats(device);
@@ -519,109 +531,56 @@ void RenderDevice::LoadShader(const char *fileName, bool32 linear)
         return;
     }
 
-    SDL_GPUShader *gpuShader = nullptr;
-    SDL_GPUShaderCreateInfo shaderInfo;
-    SDL_zero(shaderInfo);
+    SDL_GPUShaderFormat usedFormat = ((formats & SDL_GPU_SHADERFORMAT_SPIRV) ? SDL_GPU_SHADERFORMAT_SPIRV :
+        (formats & SDL_GPU_SHADERFORMAT_DXIL) ? SDL_GPU_SHADERFORMAT_DXIL : SDL_GPU_SHADERFORMAT_MSL);
+        
+    const char *entry  = (usedFormat == SDL_GPU_SHADERFORMAT_MSL ? "main0" : "main");
+    const char *folder = (usedFormat == SDL_GPU_SHADERFORMAT_MSL ? "MSL" : (usedFormat == SDL_GPU_SHADERFORMAT_SPIRV ? "SPIRV" : "DXIL"));
 
-    if (formats & SDL_GPU_SHADERFORMAT_SPIRV) {
-        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/SPIRV/%s.frag", fileName);
-        InitFileInfo(&info);
-        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
-            uint8 *fileData = NULL;
-            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
-            ReadBytes(&info, fileData, info.fileSize);
-            fileData[info.fileSize] = 0;
-            CloseFile(&info);
+    SDL_GPUShader *fragShader = nullptr;
 
-            shaderInfo = {
-                sizeof(fileData),
-                fileData,
-                "main",
-                SDL_GPU_SHADERFORMAT_SPIRV,
-                SDL_GPU_SHADERSTAGE_FRAGMENT,
-            };
+    sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/%s/%s.frag", folder, fileName);
+    InitFileInfo(&info);
+    if (LoadFile(&info, fullFilePath, FMODE_RB)) {
+        uint8 *fileData = NULL;
+        AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
+        ReadBytes(&info, fileData, info.fileSize);
+        fileData[info.fileSize] = 0;
+        CloseFile(&info);
 
-            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
+        fragShader = SDL_CreateGPUShader(device, (SDL_GPUShaderCreateInfo[]) {{
+            .code_size = sizeof(fileData),
+            .code = fileData,
+            .entrypoint = "entry",
+            .format = usedFormat,
+            .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+            .num_uniform_buffers = 1
+        }});
 
-            if (!gpuShader) {
-                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
-                return;
-            }
+        if (!fragShader) {
+            PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU fragment shader for %s: %s", fileName, SDL_GetError());
+            return;
         }
-    }
-    else if (formats & SDL_GPU_SHADERFORMAT_DXIL) {
-        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/DXIL/%s.frag", fileName);
-        InitFileInfo(&info);
-        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
-            uint8 *fileData = NULL;
-            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
-            ReadBytes(&info, fileData, info.fileSize);
-            fileData[info.fileSize] = 0;
-            CloseFile(&info);
 
-            shaderInfo = {
-                sizeof(fileData),
-                fileData,
-                "main",
-                SDL_GPU_SHADERFORMAT_DXIL,
-                SDL_GPU_SHADERSTAGE_FRAGMENT,
-            };
+        SDL_GPURenderStateCreateInfo rsInfo = {
+            fragShader,
+        };
 
-            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
+        SDL_GPURenderState *gpuState = SDL_CreateGPURenderState(renderer, &rsInfo);
 
-            if (!gpuShader) {
-                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
-                return;
-            }
+        if (!gpuState) {
+            PrintLog(PRINT_ERROR, "ERROR: failed to create GPU state for %s: %s", fileName, SDL_GetError());
+            return;
         }
+
+        shader->renderState = gpuState;
+
+        SDL_ReleaseGPUShader(device, fragShader);
+
+        shaderCount++;
+
+        UploadData();
     }
-    else if (formats & SDL_GPU_SHADERFORMAT_MSL) {
-        sprintf_s(fullFilePath, sizeof(fullFilePath), "Data/Shaders/CSO-SDL3/MSL/%s.frag", fileName);
-        InitFileInfo(&info);
-        if (LoadFile(&info, fullFilePath, FMODE_RB)) {
-            uint8 *fileData = NULL;
-            AllocateStorage((void **)&fileData, info.fileSize + 1, DATASET_TMP, false);
-            ReadBytes(&info, fileData, info.fileSize);
-            fileData[info.fileSize] = 0;
-            CloseFile(&info);
-
-            shaderInfo = {
-                sizeof(fileData),
-                fileData,
-                "main0",
-                SDL_GPU_SHADERFORMAT_MSL,
-                SDL_GPU_SHADERSTAGE_FRAGMENT,
-            };
-
-            gpuShader = SDL_CreateGPUShader(device, &shaderInfo);
-
-            if (!gpuShader) {
-                PrintLog(PRINT_NORMAL, "ERROR: failed to create GPU shader for %s: %s", fileName, SDL_GetError());
-                return;
-            }
-        }
-    }
-
-    SDL_GPURenderStateCreateInfo rsInfo = {
-        gpuShader,
-    };
-
-    SDL_GPURenderState *gpuState = SDL_CreateGPURenderState(renderer, &rsInfo);
-
-    float2 uniforms;
-    SDL_zero(uniforms);
-    uniforms.x = textureSize.x;
-    uniforms.y = textureSize.y;
-    if (!SDL_SetGPURenderStateFragmentUniforms(gpuState, 0, &uniforms, sizeof(uniforms))) {
-        SDL_Log("Couldn't set uniform data: %s", SDL_GetError());
-        return;
-    }
-
-    shader->renderState = gpuState;
-
-    SDL_ReleaseGPUShader(device, gpuShader);
-
-    shaderCount++;
 }
 
 bool RenderDevice::InitShaders()

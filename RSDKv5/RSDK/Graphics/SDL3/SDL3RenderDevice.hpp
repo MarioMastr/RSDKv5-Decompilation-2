@@ -25,6 +25,16 @@ public:
     };
     static WindowInfo displayInfo;
 
+    struct RSDKBuffer {
+        float2 pixelSize;   // internal game resolution (usually 424x240 or smth)
+        float2 textureSize; // size of the internal framebuffer texture
+        float2 viewSize;    // window viewport size
+    #if RETRO_REV02  // if RETRO_REV02 is defined it assumes the engine is plus/rev02 RSDKv5, else it assumes pre-plus/Rev01 RSDKv5
+        float screenDim; // screen dimming percent
+    #endif
+    };
+    static RSDKBuffer uniformBuffer;
+
     static bool Init();
     static void CopyFrameBuffer();
     static void FlipScreen();
@@ -49,6 +59,7 @@ public:
 
     static bool InitShaders();
     static void LoadShader(const char *fileName, bool32 linear);
+    static void UploadData();
 
     static inline void ShowCursor(bool32 shown) { if (shown )SDL_ShowCursor(); else SDL_HideCursor(); }
     static inline bool GetCursorPos(Vector2 *pos)
