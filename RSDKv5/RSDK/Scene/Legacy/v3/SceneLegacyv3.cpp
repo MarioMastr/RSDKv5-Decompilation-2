@@ -66,17 +66,26 @@ void RSDK::Legacy::v3::ProcessStage()
             vertexCount = 0;
             faceCount   = 0;
 
-#if RSDK_AUTOBUILD
-            // Prevent playing as Knuckles or Amy if on autobuilds
-            if (GetGlobalVariableByName("PLAYER_KNUCKLES") && playerListPos == GetGlobalVariableByName("PLAYER_KNUCKLES"))
-                playerListPos = 0;
-            else if (GetGlobalVariableByName("PLAYER_KNUCKLES_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_KNUCKLES_TAILS"))
-                playerListPos = 0;
-            else if (GetGlobalVariableByName("PLAYER_AMY") && playerListPos == GetGlobalVariableByName("PLAYER_AMY"))
-                playerListPos = 0;
-            else if (GetGlobalVariableByName("PLAYER_AMY_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_AMY_TAILS"))
-                playerListPos = 0;
+#if RETRO_USERCORE_STEAM
+            if (SteamAPI_Init()) {
+                bool installed = SteamApps()->BIsDlcInstalled(2343200); // is Origins Plus here?
+                SetGlobalVariableByName("game.hasPlusDLC", installed);
+            }
+            else {
+                SetGlobalVariableByName("game.hasPlusDLC", false);
+            }
 #endif
+            if (!GetGlobalVariableByName("game.hasPlusDLC")) {
+                // Prevent playing as Knuckles or Amy if on autobuilds
+                if (GetGlobalVariableByName("PLAYER_KNUCKLES") && playerListPos == GetGlobalVariableByName("PLAYER_KNUCKLES"))
+                    playerListPos = 0;
+                else if (GetGlobalVariableByName("PLAYER_KNUCKLES_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_KNUCKLES_TAILS"))
+                    playerListPos = 0;
+                else if (GetGlobalVariableByName("PLAYER_AMY") && playerListPos == GetGlobalVariableByName("PLAYER_AMY"))
+                    playerListPos = 0;
+                else if (GetGlobalVariableByName("PLAYER_AMY_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_AMY_TAILS"))
+                    playerListPos = 0;
+            }
 
             for (int32 p = 0; p < LEGACY_v3_PLAYER_COUNT; ++p) {
                 memset(&playerList[p], 0, sizeof(playerList[p]));
@@ -138,6 +147,8 @@ void RSDK::Legacy::v3::ProcessStage()
                 ProcessObjects();
                 HandleCameras();
                 ProcessParallaxAutoScroll();
+
+                DrawStageGFX();
             }
 #endif
 

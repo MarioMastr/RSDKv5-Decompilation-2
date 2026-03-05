@@ -58,13 +58,24 @@ void RSDK::Legacy::v4::ProcessStage(void)
             stageMinutes      = 0;
             stageMode         = STAGEMODE_NORMAL;
 
-#if RSDK_AUTOBUILD
-            // Prevent playing as Amy if on autobuilds
-            if (GetGlobalVariableByName("PLAYER_AMY") && playerListPos == GetGlobalVariableByName("PLAYER_AMY"))
-                playerListPos = 0;
-            else if (GetGlobalVariableByName("PLAYER_AMY_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_AMY_TAILS"))
-                playerListPos = 0;
+#if RETRO_USERCORE_STEAM
+            if (SteamAPI_Init()) {
+                bool installed = SteamApps()->BIsDlcInstalled(2343200); // is Origins Plus here?
+                SetGlobalVariableByName("game.hasPlusDLC", installed);
+            }
+            else {
+                SetGlobalVariableByName("game.hasPlusDLC", false);
+            }
 #endif
+
+            if (!GetGlobalVariableByName("game.hasPlusDLC")) {
+                // Prevent playing as Amy if on autobuilds
+                if (GetGlobalVariableByName("PLAYER_AMY") && playerListPos == GetGlobalVariableByName("PLAYER_AMY"))
+                    playerListPos = 0;
+                else if (GetGlobalVariableByName("PLAYER_AMY_TAILS") && playerListPos == GetGlobalVariableByName("PLAYER_AMY_TAILS"))
+                    playerListPos = 0;
+            }
+
 
 #if RETRO_USE_MOD_LOADER
             if (devMenu.modsChanged)
@@ -103,6 +114,8 @@ void RSDK::Legacy::v4::ProcessStage(void)
                 ProcessObjects();
                 HandleCameras();
                 ProcessParallaxAutoScroll();
+
+                DrawStageGFX();
             }
 #endif
 
