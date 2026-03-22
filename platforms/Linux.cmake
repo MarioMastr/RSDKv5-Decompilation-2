@@ -5,7 +5,7 @@ find_package(PkgConfig REQUIRED)
 
 add_executable(RetroEngine ${RETRO_FILES})
 
-set(RETRO_SUBSYSTEM "SDL3" CACHE STRING "The subsystem to use")
+set(RETRO_SUBSYSTEM "VK" CACHE STRING "The subsystem to use")
 option(USE_SDL_AUDIO "Whether or not to use SDL for audio instead of the default MiniAudio." OFF)
 
 # Some distros like Debian 11 need this to prevent link errors (used by std::thread in Audio devices)

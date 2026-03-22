@@ -123,6 +123,9 @@ ipch/
 *.vsp
 *.vspx
 
+# Clangd cache files
+compile_commands.json
+
 # TFS 2012 Local Workspace
 $tf/
 
