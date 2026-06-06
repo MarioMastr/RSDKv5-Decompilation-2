@@ -1,15 +1,12 @@
 # Mac
 
 ## Dependencies:
-SDL2: https://www.libsdl.org/download-2.0.php
-just download the appropriate development library for your compiler and place it in "./SDL2/"
-
-libogg: https://xiph.org/downloads/ (libogg)
-download the libogg .zip file and unzip it in "./libogg/", then build the library as a framework, and include it in the xcode proj
-
-libtheora: https://xiph.org/downloads/ (libtheora)
-download the libtheora .zip file and unzip it in "./libtheora/", then build the library as a framework, and include it in the xcode proj
+Install [homebrew](https://brew.sh/) and install libogg, theora, and either sdl2, sdl3, or both glew and glfw depending on the backend you are using.
 
 ## Compiling 
 
-Open the Xcode project and build it from there.
+Follow the CMake tutorial.
+
+## Running
+
+If the app bundle is downloaded from the autobuild, run the command `xattr -cr $path_to_extracted_directory`.

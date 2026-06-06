@@ -473,9 +473,20 @@ enum GameRegions {
 #if RETRO_PLATFORM == RETRO_OSX
 
 #include "cocoaHelpers.hpp"
-#elif RETRO_PLATFORM == RETRO_iOS
 
-#include "cocoaHelpers.hpp"
+#if RETRO_AUDIODEVICE_MINI
+#define MA_NO_DECODING
+#define MA_NO_ENCODING
+#define MA_NO_RESOURCE_MANAGER 
+#define MA_NO_ENGINE
+#include <miniaudio/miniaudio.h>
+#endif
+
+#if RETRO_RENDERDEVICE_GLFW
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#endif
+
 #elif RETRO_PLATFORM == RETRO_LINUX || RETRO_PLATFORM == RETRO_SWITCH
 
 #if RETRO_AUDIODEVICE_PORT
@@ -529,14 +540,11 @@ extern "C" {
 #endif
 
 #if RETRO_RENDERDEVICE_SDL2 || RETRO_INPUTDEVICE_SDL2 || RETRO_AUDIODEVICE_SDL2
-#if RETRO_PLATFORM == RETRO_OSX
-// yeah, I dunno how you're meant to do the below with macOS frameworks so leaving this as is for rn :P
 #include <SDL2/SDL.h>
-#else
-// This is the way of including SDL that is recommended by the devs themselves:
-// https://wiki.libsdl.org/FAQDevelopment#do_i_include_sdl.h_or_sdlsdl.h
-#include "SDL.h"
 #endif
+
+#if RETRO_RENDERDEVICE_SDL3 || RETRO_INPUTDEVICE_SDL3 || RETRO_AUDIODEVICE_SDL3
+#include <SDL3/SDL.h>
 #endif
 
 #include <theora/theoradec.h>

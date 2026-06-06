@@ -1,0 +1,13 @@
+diff --git a/src/video/cocoa/SDL_cocoawindow.m b/src/video/cocoa/SDL_cocoawindow.m
+index 7be564af0..d00137367 100644
+--- a/src/video/cocoa/SDL_cocoawindow.m
++++ b/src/video/cocoa/SDL_cocoawindow.m
+@@ -2369,7 +2369,7 @@ bool Cocoa_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Properti
+                 return SDL_SetError("%s", [[e reason] UTF8String]);
+             }
+ 
+-            [nswindow setColorSpace:[NSColorSpace sRGBColorSpace]];
++            [nswindow setColorSpace:[NSColorSpace displayP3ColorSpace]];
+ 
+             [nswindow setTabbingMode:NSWindowTabbingModeDisallowed];
+ 
