@@ -1,7 +1,13 @@
+#pragma once
+
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
+
 #if RETRO_REV02
 
 struct SteamUserStorage : SKU::UserStorage {
     ISteamRemoteStorage *remoteStorage;
+    void CopySave(bool save, const char *filename);
 
     int32 TryAuth()
     {
@@ -28,12 +34,15 @@ struct SteamUserStorage : SKU::UserStorage {
     {
         bool32 success = false;
 
-        if (!remoteStorage->FileExists(filename)) {
-            PrintLog(PRINT_NORMAL, "File '%s' not found, creating...", filename);
-            TrySaveUserFile(filename, buffer, size, callback, false);
-        }
-
         if (!noSaveActive) {
+#if !RETRO_REV0U
+            CopySave(false, filename);
+#endif
+            if (!remoteStorage->FileExists(filename)) {
+                PrintLog(PRINT_ERROR, "File '%s' not found, creating...", filename);
+                TrySaveUserFile(filename, buffer, size, callback, false);
+            }
+
             int32 bytes = remoteStorage->FileRead(filename, buffer, size);
             if (bytes == 0) {
                 PrintLog(PRINT_ERROR, "Failed to load user file.");
@@ -65,6 +74,11 @@ struct SteamUserStorage : SKU::UserStorage {
         bool32 success = false;
         if (!noSaveActive) {
             success = remoteStorage->FileWrite(filename, buffer, size);
+
+#if !RETRO_REV0U
+            CopySave(true, filename);
+#endif
+
             if (callback)
                 callback(SKU::STATUS_OK);
         }

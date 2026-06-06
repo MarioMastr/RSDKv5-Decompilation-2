@@ -8,7 +8,6 @@ using namespace RSDK;
 #include "Legacy/ModAPILegacy.cpp"
 #endif
 
-#include <filesystem>
 #include <stdexcept>
 #include <functional>
 
