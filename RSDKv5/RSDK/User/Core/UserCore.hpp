@@ -1,8 +1,3 @@
-#pragma once
-
-#include <RSDK/Core/RetroEngine.hpp>
-using namespace RSDK;
-
 namespace RSDK
 {
 
