@@ -9,18 +9,20 @@ bool32 SteamUserStatsReceived = false;
 bool32 CheckDLCs()
 {
     AppId_t gameID;
+#if RETRO_REV0U
     switch (engine.version) {
         default:
         case 5:
             gameID = 845640;
             break;
-#if RETRO_REV0U
         case 4:
         case 3:
             gameID = 2343200;
             break;
-#endif
     }
+#else
+    gameID = 845640;
+#endif
 
     return SteamApps()->BIsSubscribedApp(gameID);
 }
@@ -67,18 +69,20 @@ SKU::SteamCore *InitSteamCore()
 
         const char *gameID;
 
+#if RETRO_REV0U
         switch (engine.version) {
             default:
             case 5:
                 gameID = "584400\n";
                 break;
-#if RETRO_REV0U
             case 4:
             case 3:
                 gameID = "1794960\n";
                 break;
-#endif
         }
+#else
+        gameID = "584400\n";
+#endif
 
         fWrite(gameID, 1, strlen(gameID), f);
 
