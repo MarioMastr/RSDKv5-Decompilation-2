@@ -18,6 +18,16 @@ uint8 RenderDevice::lastTextureFormat = -1;
 
 #define NORMALIZE(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
 
+SDL_FColor uint32ToFColor(uint32 &color) {
+    SDL_Color *c = (SDL_Color *)&color;
+    return SDL_FColor {
+        .r = (float) c->r / 255.0f,
+        .g = (float) c->g / 255.0f,
+        .b = (float) c->b / 255.0f,
+        .a = (float) c->a / 255.0f
+    };
+}
+
 bool RenderDevice::Init()
 {
     const char *gameTitle = gameVerInfo.gameTitle;
@@ -109,9 +119,9 @@ void RenderDevice::FlipScreen()
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
     SDL_RenderClear(renderer);
 
-/*
-#if (SDL_VERSION >= SDL_VERSIONNUM(3, 2, 0))
+#if (SDL_VERSION >= SDL_VERSIONNUM(3, 4, 0))
     int32 startVert = 0;
+    SDL_FColor vertColor;
     switch (videoSettings.screenCount) {
         default:
         case 0:
@@ -120,15 +130,16 @@ void RenderDevice::FlipScreen()
 #else
             startVert = 18;
 #endif
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, imageTexture, &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
             break;
 
         case 1:
-            startVert = 0;
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
             break;
 
@@ -138,8 +149,9 @@ void RenderDevice::FlipScreen()
 #else
             startVert = 6;
 #endif
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
 #if RETRO_REV02
@@ -147,54 +159,62 @@ void RenderDevice::FlipScreen()
 #else
             startVert = 12;
 #endif
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
             break;
 
 #if RETRO_REV02
         case 3:
             startVert = startVertex_3P[0];
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
             startVert = startVertex_3P[1];
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
             startVert = startVertex_3P[2];
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[2], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
             break;
 
         case 4:
             startVert = 30;
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[0], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
             startVert = 36;
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
+
             SDL_RenderGeometryRaw(renderer, screenTexture[1], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
             startVert = 42;
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[2], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
 
             startVert = 48;
+            vertColor = uint32ToFColor(vertexBuffer[startVert].color);
             SDL_RenderGeometryRaw(renderer, screenTexture[3], &vertexBuffer[startVert].pos.x, sizeof(RenderVertex),
-                                  (SDL_FColor *)&vertexBuffer[startVert].color, sizeof(RenderVertex), &vertexBuffer[startVert].tex.x,
+                                  &vertColor, sizeof(RenderVertex) / 255, &vertexBuffer[startVert].tex.x,
                                   sizeof(RenderVertex), 6, NULL, 0, 0);
             break;
 #endif
     }
 #else
-*/
     int32 startVert = 0;
     SDL_FRect src, dst;
 
@@ -293,7 +313,7 @@ void RenderDevice::FlipScreen()
             break;
 #endif
     }
-// #endif
+#endif
     if (dimAmount < 1.0f) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
         SDL_RenderFillRect(renderer, NULL);

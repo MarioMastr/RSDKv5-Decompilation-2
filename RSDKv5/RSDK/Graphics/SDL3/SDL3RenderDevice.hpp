@@ -1,4 +1,11 @@
-using ShaderEntry = ShaderEntryBase;
+#pragma once
+
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
+
+struct ShaderEntry : ShaderEntryBase {
+    SDL_GPURenderState *renderState;
+};
 
 class RenderDevice : public RenderDeviceBase
 {
@@ -54,6 +61,7 @@ public:
 
     static SDL_Window *window;
     static SDL_Renderer *renderer;
+    static SDL_GPUDevice *gpuDevice;
     static SDL_Texture *screenTexture[SCREEN_COUNT];
 
     static SDL_Texture *imageTexture;
