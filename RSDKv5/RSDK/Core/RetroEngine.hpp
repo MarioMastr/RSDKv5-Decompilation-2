@@ -477,7 +477,7 @@ enum GameRegions {
 #if RETRO_AUDIODEVICE_MINI
 #define MA_NO_DECODING
 #define MA_NO_ENCODING
-#define MA_NO_RESOURCE_MANAGER 
+#define MA_NO_RESOURCE_MANAGER
 #define MA_NO_ENGINE
 #include <miniaudio/miniaudio.h>
 #endif

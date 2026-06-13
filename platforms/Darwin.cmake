@@ -78,7 +78,6 @@ elseif(RETRO_SUBSYSTEM STREQUAL "SDL3")
     message("found SDL3")
     find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(RetroEngine SDL3::SDL3-static)
-
 else()
     message(FATAL_ERROR "RETRO_SUBSYSTEM must be OGL, SDL2, or SDL3 if available")
 endif()
