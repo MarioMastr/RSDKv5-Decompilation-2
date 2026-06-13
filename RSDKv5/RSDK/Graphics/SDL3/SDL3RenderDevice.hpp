@@ -75,6 +75,8 @@ private:
 
     static void ProcessEvent(SDL_Event event);
 
+    static SDL_FColor GetFColor(uint32 color);
+
     static uint32 displayModeIndex;
     static int32 displayModeCount;
 
