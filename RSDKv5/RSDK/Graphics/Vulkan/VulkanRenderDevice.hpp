@@ -186,6 +186,7 @@ private:
     static uint32 presentIndex;
 
     static VkViewport viewport;
+    static VkRect2D scissors;
 
     static VkSemaphore imageAvailableSemaphore;
     static VkSemaphore renderFinishedSemaphore;

@@ -154,6 +154,7 @@ uint32 RenderDevice::graphicsIndex;
 uint32 RenderDevice::presentIndex;
 
 VkViewport RenderDevice::viewport;
+VkRect2D RenderDevice::scissors;
 
 VkSemaphore RenderDevice::imageAvailableSemaphore;
 VkSemaphore RenderDevice::renderFinishedSemaphore;
@@ -412,12 +413,13 @@ bool RenderDevice::SetupRendering()
 
     deviceInfo.pEnabledFeatures = &deviceFeatures;
 
-#ifndef VK_DEBUG
-    deviceInfo.enabledLayerCount = 0;
-#else
-    deviceInfo.enabledLayerCount   = sizeof(validationLayers) / sizeof(const char *);
-    deviceInfo.ppEnabledLayerNames = validationLayers;
-#endif
+    // not conformant to vulkan spec: https://docs.vulkan.org/spec/latest/appendices/legacy.html#legacy-devicelayers
+// #ifndef VK_DEBUG
+//     deviceInfo.enabledLayerCount = 0;
+// #else
+//     deviceInfo.enabledLayerCount   = sizeof(validationLayers) / sizeof(const char *);
+//     deviceInfo.ppEnabledLayerNames = validationLayers;
+// #endif
 
     deviceInfo.enabledExtensionCount   = sizeof(requiredExtensions) / sizeof(const char *);
     deviceInfo.ppEnabledExtensionNames = requiredExtensions;
@@ -568,7 +570,7 @@ bool RenderDevice::InitGraphicsAPI()
         if ((pixAspect - 0.1) > (viewSize.x / viewSize.y)) {
             viewSize.y     = (pixelSize.y / pixelSize.x) * viewSize.x;
             viewportPos.y  = (lastViewSize.y >> 1) - (viewSize.y * 0.5);
-            viewportSize.y = viewSize.y;
+            viewportSize.y = viewSize.y - viewportPos.y;
         }
     }
     else {
@@ -744,12 +746,15 @@ bool RenderDevice::InitGraphicsAPI()
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
+    scissors.offset = { (int32)viewportPos.x, (int32)viewportPos.y };
+    scissors.extent = { (uint32)viewportSize.x, (uint32)viewportSize.y };
+
     viewportState               = {};
     viewportState.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 1;
     viewportState.pViewports    = &viewport;
     viewportState.scissorCount  = 1;
-    viewportState.pScissors     = (VkRect2D *)&viewport;
+    viewportState.pScissors     = &scissors;
 
     rasterizer                         = {};
     rasterizer.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
