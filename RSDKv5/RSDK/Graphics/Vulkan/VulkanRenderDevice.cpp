@@ -291,8 +291,10 @@ bool RenderDevice::SetupRendering()
     std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 #endif
 
-    // some macOS code here might be needed:
-    // https://vulkan-tutorial.com/en/Drawing_a_triangle/Setup/Instance#page_Encountered-VK_ERROR_INCOMPATIBLE_DRIVER
+#if RETRO_PLATFORM == RETRO_OSX
+    extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    instanceInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 
 #ifndef VK_DEBUG
     instanceInfo.enabledLayerCount = 0;
@@ -417,6 +419,10 @@ bool RenderDevice::SetupRendering()
 #else
     deviceInfo.enabledLayerCount   = sizeof(validationLayers) / sizeof(const char *);
     deviceInfo.ppEnabledLayerNames = validationLayers;
+#endif
+
+#if RETRO_PLATFORM == RETRO_OSX
+    const char *requiredExtensions[2] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset" };
 #endif
 
     deviceInfo.enabledExtensionCount   = sizeof(requiredExtensions) / sizeof(const char *);

@@ -13,7 +13,7 @@ set_source_files_properties(${RETRO_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Re
 
 add_executable(RetroEngine MACOSX_BUNDLE ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
 
-set(RETRO_SUBSYSTEM "SDL2" CACHE STRING "The subsystem to use")
+set(RETRO_SUBSYSTEM "VK" CACHE STRING "The subsystem to use")
 option(USE_MINIAUDIO "Whether or not to use MiniAudio." OFF)
 
 if(USE_MINIAUDIO)
@@ -57,30 +57,54 @@ if(RETRO_SUBSYSTEM STREQUAL "OGL")
     find_package(GLEW CONFIG)
 
     if(NOT GLEW_FOUND)
-        message(NOTICE "could not find glew, please install glew form homebrew")
+        message(NOTICE "could not find glew, please install glew from homebrew")
 
     else()
         message("found GLEW")
-        add_library(glew ALIAS GLEW::glew_s)
     endif()
 
     target_link_libraries(RetroEngine
-        glew
+        GLEW::glew
         libglfw3.a
-        "-framework AppKit"
-        "-framework IOKit"
+    )
+elseif(RETRO_SUBSYSTEM STREQUAL "VK")
+    target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
+    find_package(glfw3 CONFIG)
+
+    if(NOT glfw3_FOUND)
+        message("could not find glfw, please install from homebrew")
+    else()
+        message("found GLFW")
+    endif()
+
+    find_package(Vulkan REQUIRED)
+
+    target_compile_definitions(RetroEngine PRIVATE VULKAN_USE_GLFW=1)
+    target_link_libraries(RetroEngine
+        glfw
+        Vulkan::Vulkan
     )
 elseif(RETRO_SUBSYSTEM STREQUAL "SDL2")
-    message("found SDL2")
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL2 REQUIRED)
+    if(NOT SDL2_FOUND)
+        message("could not find sdl2, please install from homebrew")
+    else()
+        message("found sdl2")
+    endif()
     target_link_libraries(RetroEngine SDL2::SDL2-static)
 elseif(RETRO_SUBSYSTEM STREQUAL "SDL3")
-    message("found SDL3")
-    find_package(SDL3 CONFIG REQUIRED)
+    find_package(SDL3 REQUIRED)
+    if(NOT SDL3_FOUND)
+        message("could not find sdl3, please install from homebrew")
+    else()
+        message("found sdl3")
+    endif()
     target_link_libraries(RetroEngine SDL3::SDL3-static)
 else()
-    message(FATAL_ERROR "RETRO_SUBSYSTEM must be OGL, SDL2, or SDL3 if available")
+    message(FATAL_ERROR "RETRO_SUBSYSTEM must be OGL, VK, SDL2, or SDL3 if available")
 endif()
+
+target_link_libraries(RetroEngine "-framework AppKit" "-framework IOKit")
 
 message(NOTICE "configuring for the " ${RETRO_SUBSYSTEM} " subsystem")
 
