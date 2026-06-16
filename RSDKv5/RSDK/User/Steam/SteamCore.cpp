@@ -46,18 +46,8 @@ SKU::SteamCore *InitSteamCore()
 
     char rootDir[0x80];
     char pathBuffer[0x80];
-#if RETRO_PLATFORM == RETRO_UWP
-    if (!usingCWD)
-        sprintf(rootDir, "%s/", getResourcesPath());
-    else
-        sprintf(rootDir, "%s", "");
-#elif RETRO_PLATFORM == RETRO_OSX
-    sprintf(rootDir, "%s/", gamePath);
-#else
-    sprintf(rootDir, "%s", "");
-#endif
 
-#if RETRO_USERCORE_STEAM
+    sprintf(rootDir, "%s", SKU::userFileDir);
     sprintf(pathBuffer, "%s%s", rootDir, "steam_appid.txt");
 
     if (fOpen(pathBuffer, "r") == NULL) {
@@ -85,10 +75,8 @@ SKU::SteamCore *InitSteamCore()
 #endif
 
         fWrite(gameID, 1, strlen(gameID), f);
-
         fClose(f);
     }
-#endif
 
     SteamErrMsg errMsg;
     if (SteamAPI_InitEx(&errMsg) != k_ESteamAPIInitResult_OK) {
