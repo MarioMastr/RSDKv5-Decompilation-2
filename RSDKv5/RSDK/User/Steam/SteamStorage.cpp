@@ -2,84 +2,59 @@
 using namespace RSDK;
 
 #if RETRO_REV02
-namespace fs = std::filesystem;
+#include <stdlib.h>
 
 void SKU::SteamUserStorage::CopySave(bool save, const char *filename) {
     char steamFolderPath[0x100];
     if (SteamUser()->GetUserDataFolder(steamFolderPath, sizeof(steamFolderPath))) {
-        /*
-        std::string steamFolderString = steamFolderPath;
-        size_t pos = steamFolderString.find("/local"); // linux stores in .local so we need the /
-        std::string steamFilePath = steamFolderString.erase(pos).append("/remote/").append(filename);
-
-        if (fs::exists(steamFilePath)) {
-            fs::path steamFile = steamFilePath;
-            std::string localFilePath = std::string(SKU::userFileDir).append(filename);
-
-            if ((!save && fs::exists(localFilePath)) || (save && !fs::exists(localFilePath))) {
-                fs::path localFile = localFilePath;
-                fs::copy_file(save ? steamFile : localFile, save ? localFile : steamFile);
-            }
-        }
-        */
-#if RETRO_PLATFORM == RETRO_LINUX
-        const char *local = "/local"; // linux stores in .local so we need the /
-        const char *remote = "/remote/";
-#else
-        const char *local = "local";
 #if RETRO_PLATFORM == RETRO_WIN
-        const char *remote = "remote\\"; // windows and its stupid backslashes
+        const char *remote = "\\..\\remote\\"; // windows and its stupid backslashes
 #else
-        const char *remote = "local/";
-#endif
+        const char *remote = "/../remote/";
 #endif
 
         char steamFilePath[0x100];
         char localFilePath[0x100];
-        int i = 0;
+        char steamFilePathFake[0x100];
 
-        int localLen = strlen(local);
-        int steamFolderLen = strlen(steamFolderPath);
-
-        while (i < localLen) {
-            if (strstr(&steamFolderPath[i], local) == &steamFolderPath[i]) {
-                steamFolderLen -= localLen;
-
-                for (int j = i; j < steamFolderLen; j++) {
-                    steamFolderPath[j] = steamFolderPath[j + localLen];
-                }
-            }
-            else
-                i++;
-        }
-
-        sprintf_s(steamFilePath, sizeof(steamFilePath), "%s%s", steamFolderPath, remote);
+        sprintf_s(steamFilePathFake, sizeof(steamFilePathFake), "%s%s%s", steamFolderPath, remote, filename);
         sprintf_s(localFilePath, sizeof(localFilePath), "%s%s", SKU::userFileDir, filename);
 
-        FileIO *steamFileRead = fOpen(steamFilePath, "r");
-        FileIO *localFileRead = fOpen(localFilePath, "r");
+        realpath(steamFilePathFake, steamFilePath);
+
+        FILE *steamFileRead = fopen(steamFilePath, "r");
+        FILE *localFileRead = fopen(localFilePath, "r");
 
         if (steamFileRead) {
             if (!save && localFileRead) {
-                FileIO *steamFileWrite = fOpen(steamFilePath, "w");
-                
-                while ((char data = fgetc(localFileRead)) != EOF)
-                    fputc(data, steamFileWrite);
+                FILE *steamFileWrite = fopen(steamFilePath, "w");
+                while (1) {
+                    char data = fgetc(localFileRead);
+                    if (data != EOF)
+                        fputc(data, steamFileWrite);
+                    else
+                        break;
+                }
 
-                fClose(steamFileWrite);
+                fclose(steamFileWrite);
             }
             else if (save) {
-                FileIO *localFileWrite = fOpen(localFilePath, "w");
+                FILE *localFileWrite = fopen(localFilePath, "w");
 
-                while ((char data = fgetc(steamFileRead)) != EOF)
-                    fputc(data, localFileWrite);
+                while (1) {
+                    char data = fgetc(steamFileRead);
+                    if (data != EOF)
+                        fputc(data, localFileWrite);
+                    else
+                        break;
+                }
 
-                fClose(localFileWrite);
+                fclose(localFileWrite);
             }
         }
 
-        fClose(steamFileRead);
-        fClose(localFileRead);
+        fclose(steamFileRead);
+        fclose(localFileRead);
     }
     else
         PrintLog(PRINT_ERROR, "Steam userdata folder not found.");
