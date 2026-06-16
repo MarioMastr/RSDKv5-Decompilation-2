@@ -7,18 +7,20 @@ project(RetroEngine)
 # whichever architecture you use
 set(CMAKE_OSX_ARCHITECTURES "arm64")
 
-set(MACOSX_BUNDLE_ICON_FILE ${RETRO_NAME}.icns)
-set(RETRO_ICON ${CMAKE_CURRENT_SOURCE_DIR}/${RETRO_NAME}/${RETRO_NAME}.icns)
-set_source_files_properties(${RETRO_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+option(BUNDLE_RESOURCES "Whether or not use macOS's bundle to house the game files" ON)
 
-add_executable(RetroEngine MACOSX_BUNDLE ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
+set(RETRO_ICON ${CMAKE_CURRENT_SOURCE_DIR}/${RETRO_NAME}/${RETRO_NAME}.icns)
+
+if (BUNDLE_RESOURCES)
+    set(MACOSX_BUNDLE_ICON_FILE ${RETRO_ICON})
+    set_source_files_properties(${RETRO_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    add_executable(RetroEngine MACOSX_BUNDLE ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
+else()
+    add_executable(RetroEngine ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
+endif()
 
 set(RETRO_SUBSYSTEM "VK" CACHE STRING "The subsystem to use")
 option(USE_MINIAUDIO "Whether or not to use MiniAudio." OFF)
-
-if(USE_MINIAUDIO)
-    target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
-endif()
 
 find_package(Ogg CONFIG)
 
@@ -43,7 +45,7 @@ else()
 endif()
 
 if(RETRO_SUBSYSTEM STREQUAL "OGL")
-    target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
+    set(USE_MINIAUDIO ON)
     pkg_check_modules(GLFW REQUIRED glfw3)
 
     if(NOT GLFW_FOUND)
@@ -68,7 +70,7 @@ if(RETRO_SUBSYSTEM STREQUAL "OGL")
         libglfw3.a
     )
 elseif(RETRO_SUBSYSTEM STREQUAL "VK")
-    target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
+    set(USE_MINIAUDIO ON)
     find_package(glfw3 CONFIG)
 
     if(NOT glfw3_FOUND)
@@ -102,6 +104,14 @@ elseif(RETRO_SUBSYSTEM STREQUAL "SDL3")
     target_link_libraries(RetroEngine SDL3::SDL3-static)
 else()
     message(FATAL_ERROR "RETRO_SUBSYSTEM must be OGL, VK, SDL2, or SDL3 if available")
+endif()
+
+if(USE_MINIAUDIO)
+    target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
+endif()
+
+if (BUNDLE_RESOURCES)
+    target_compile_definitions(RetroEngine PRIVATE BUNDLE_RESOURCES=1)
 endif()
 
 target_link_libraries(RetroEngine "-framework AppKit" "-framework IOKit")

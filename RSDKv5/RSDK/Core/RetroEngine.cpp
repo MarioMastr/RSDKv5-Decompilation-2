@@ -10,8 +10,11 @@ LogicLinkHandle RSDK::linkGameLogic = NULL;
 
 Link::Handle gameLogicHandle = NULL;
 
+
 #if RETRO_PLATFORM == RETRO_ANDROID
 #include <jni.h>
+#include <unistd.h>
+#elif RETRO_PLATFORM == RETRO_OSX
 #include <unistd.h>
 #endif
 
@@ -32,6 +35,9 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 
     if (InitStorage()) {
         SKU::InitUserCore();
+#if RETRO_PLATFORM == RETRO_OSX
+        chdir(SKU::userFileDir);
+#endif
         LoadSettingsINI();
 
 #if !RETRO_USE_ORIGINAL_CODE

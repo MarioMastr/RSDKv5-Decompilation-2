@@ -1152,7 +1152,11 @@ void RSDK::SKU::InitUserDirectory()
 #if RETRO_PLATFORM == RETRO_OSX
 
     char buffer[0x100];
+#if BUNDLE_RESOURCES
+    sprintf_s(buffer, sizeof(buffer), "%s/", getBundleResourcesPath());
+#else
     sprintf_s(buffer, sizeof(buffer), "%s/", getResourcesPath());
+#endif
     SKU::SetUserFileCallbacks(buffer, NULL, NULL);
 
 #elif RETRO_PLATFORM == RETRO_ANDROID
