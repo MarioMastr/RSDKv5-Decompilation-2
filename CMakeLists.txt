@@ -166,11 +166,12 @@ target_compile_definitions(RetroEngine PRIVATE
 )
 
 if(WITH_RSDK)
-    if(NOT GAME_STATIC)
+    if(NOT GAME_STATIC AND (NOT APPLE OR NOT RETRO_RESOURCES))
         add_custom_command(TARGET RetroEngine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:${GAME_NAME}>
-            $<TARGET_FILE_DIR:RetroEngine>)
+            $<TARGET_FILE_DIR:RetroEngine>
+        )
     endif()
 
     target_compile_definitions(${GAME_NAME} PRIVATE

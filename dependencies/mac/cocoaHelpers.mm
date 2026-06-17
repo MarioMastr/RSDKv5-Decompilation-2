@@ -9,7 +9,7 @@ const char* getResourcesPath()
 {
     @autoreleasepool
     {
-        NSString* appFolder = [NSBundle.mainBundle.bundlePath stringByDeletingLastPathComponent];
+        NSString* appFolder = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
         NSString* dataFile = [appFolder stringByAppendingString:@"/Data.rsdk"];
         NSString* dataFolder = [appFolder stringByAppendingString:@"/Data"];
         NSString* settingsFile = [appFolder stringByAppendingString:@"/settings.ini"];
@@ -22,7 +22,7 @@ const char* getResourcesPath()
         NSString *applicationSupportDirectory = [paths firstObject];
         NSString* gameData = [applicationSupportDirectory stringByAppendingString:@"/RSDKv5"];
         if(![NSFileManager.defaultManager fileExistsAtPath:gameData]) {
-            mkdir([gameData cStringUsingEncoding:NSUTF8StringEncoding], 0777);
+            mkdir([gameData UTF8String], 0777);
         }
         return [gameData UTF8String];
     }
@@ -31,6 +31,11 @@ const char* getResourcesPath()
 const char *getBundleResourcePath()
 {
     return [[[NSBundle mainBundle] resourcePath] UTF8String];
+}
+
+const char *getBundleFrameworksPath()
+{
+    return [[[NSBundle mainBundle] privateFrameworksPath] UTF8String];
 }
 
 const float getMacScreenScale()

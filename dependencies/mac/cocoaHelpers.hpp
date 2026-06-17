@@ -3,6 +3,7 @@
 
 const char* getResourcesPath();
 const char* getBundleResourcePath();
+const char *getBundleFrameworksPath();
 const float getMacScreenScale();
 
 #endif

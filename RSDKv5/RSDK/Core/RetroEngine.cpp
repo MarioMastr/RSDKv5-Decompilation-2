@@ -14,8 +14,6 @@ Link::Handle gameLogicHandle = NULL;
 #if RETRO_PLATFORM == RETRO_ANDROID
 #include <jni.h>
 #include <unistd.h>
-#elif RETRO_PLATFORM == RETRO_OSX
-#include <unistd.h>
 #endif
 
 int32 *RSDK::globalVarsPtr = NULL;
@@ -35,9 +33,6 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 
     if (InitStorage()) {
         SKU::InitUserCore();
-#if RETRO_PLATFORM == RETRO_OSX
-        chdir(SKU::userFileDir);
-#endif
         LoadSettingsINI();
 
 #if !RETRO_USE_ORIGINAL_CODE
@@ -1293,7 +1288,9 @@ void RSDK::InitGameLink()
 #if RETRO_PLATFORM == RETRO_WIN
             strcpy_s(buffer, 0x100, gameLogicName);
 #elif RETRO_PLATFORM == RETRO_OSX
-            sprintf(buffer, "%s/%s", getBundleResourcePath(), gameLogicName);
+#if RETRO_RESOURCES
+            sprintf(buffer, "%s/%s", getBundleFrameworksPath(), gameLogicName);
+#endif
 #else
             sprintf(buffer, "%s%s", SKU::userFileDir, gameLogicName);
 #endif

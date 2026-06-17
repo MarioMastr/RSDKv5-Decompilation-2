@@ -7,14 +7,15 @@ project(RetroEngine)
 # whichever architecture you use
 set(CMAKE_OSX_ARCHITECTURES "arm64")
 
-option(BUNDLE_RESOURCES "Whether or not use macOS's bundle to house the game files" ON)
+option(RETRO_RESOURCES "Whether or not use macOS's bundle to house the game files" ON)
 
 set(RETRO_ICON ${CMAKE_CURRENT_SOURCE_DIR}/${RETRO_NAME}/${RETRO_NAME}.icns)
 
-if (BUNDLE_RESOURCES)
+if (RETRO_RESOURCES)
     set(MACOSX_BUNDLE_ICON_FILE ${RETRO_ICON})
     set_source_files_properties(${RETRO_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     add_executable(RetroEngine MACOSX_BUNDLE ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
+    set(CMAKE_BUILD_RPATH "@loader_path/../../Frameworks")
 else()
     add_executable(RetroEngine ${RETRO_ICON} ${RETRO_FILES} dependencies/mac/cocoaHelpers.mm)
 endif()
@@ -110,8 +111,8 @@ if(USE_MINIAUDIO)
     target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
 endif()
 
-if (BUNDLE_RESOURCES)
-    target_compile_definitions(RetroEngine PRIVATE BUNDLE_RESOURCES=1)
+if (RETRO_RESOURCES)
+    target_compile_definitions(RetroEngine PRIVATE RETRO_RESOURCES=1)
 endif()
 
 target_link_libraries(RetroEngine "-framework AppKit" "-framework IOKit")
@@ -119,3 +120,15 @@ target_link_libraries(RetroEngine "-framework AppKit" "-framework IOKit")
 message(NOTICE "configuring for the " ${RETRO_SUBSYSTEM} " subsystem")
 
 target_include_directories(RetroEngine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/mac)
+
+if (WITH_RSDK AND NOT GAME_STATIC AND RETRO_RESOURCES AND NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../Frameworks)
+    add_custom_command(TARGET RetroEngine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            $<TARGET_FILE_DIR:RetroEngine>/../Frameworks/
+    )
+
+    add_custom_command(TARGET RetroEngine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${GAME_NAME}>
+            $<TARGET_FILE_DIR:RetroEngine>/../Frameworks/)
+endif()
