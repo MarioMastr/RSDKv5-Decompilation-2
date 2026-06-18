@@ -569,7 +569,7 @@ bool RenderDevice::InitGraphicsAPI()
         if ((pixAspect - 0.1) > (viewSize.x / viewSize.y)) {
             viewSize.y     = (pixelSize.y / pixelSize.x) * viewSize.x;
             viewportPos.y  = (lastViewSize.y >> 1) - (viewSize.y * 0.5);
-            viewportSize.y = viewSize.y - viewportPos.y;
+            viewportSize.y = viewSize.y - (2 * viewportPos.y);
         }
     }
     else {
