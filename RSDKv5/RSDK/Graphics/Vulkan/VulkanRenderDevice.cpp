@@ -1624,8 +1624,6 @@ void RenderDevice::FlipScreen()
     presentInfo.pImageIndices = &imageIndex;
 
     vkQueuePresentKHR(presentQueue, &presentInfo);
-
-    imageIndex += 1;
 }
 
 void RenderDevice::ReleaseShaderPipelines()
