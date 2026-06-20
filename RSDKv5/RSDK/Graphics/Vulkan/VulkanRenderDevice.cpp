@@ -413,13 +413,6 @@ bool RenderDevice::SetupRendering()
 
     deviceInfo.pEnabledFeatures = &deviceFeatures;
 
-    // #ifndef VK_DEBUG
-    deviceInfo.enabledLayerCount = 0;
-    // #else
-    //     deviceInfo.enabledLayerCount   = sizeof(validationLayers) / sizeof(const char *);
-    //     deviceInfo.ppEnabledLayerNames = validationLayers;
-    // #endif
-
     deviceInfo.enabledExtensionCount   = sizeof(requiredExtensions) / sizeof(const char *);
     deviceInfo.ppEnabledExtensionNames = requiredExtensions;
 
