@@ -200,7 +200,7 @@ enum GameRegions {
 // ============================
 // USER CORE BACKENDS
 // ============================
-#define RETRO_USERCORE_DUMMY (RETRO_USERCORE_ID == 0) // bit 7 disables the dummy core stuff if you ever need that for some odd reason
+#define RETRO_USERCORE_DUMMY (!(RETRO_USERCORE_ID & 0x80)) // bit 7 disables the dummy core stuff if you ever need that for some odd reason)
 #define RETRO_USERCORE_STEAM (RETRO_USERCORE_ID == 1)
 #define RETRO_USERCORE_PS4   (RETRO_USERCORE_ID == 2)
 #define RETRO_USERCORE_XB1   (RETRO_USERCORE_ID == 3)

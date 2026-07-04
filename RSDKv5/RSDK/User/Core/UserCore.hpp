@@ -1,3 +1,6 @@
+#ifndef USER_CORE_H
+#define USER_CORE_H
+
 namespace RSDK
 {
 
@@ -203,3 +206,5 @@ inline void WriteText(FileIO *file, const char *string, ...)
 }
 
 } // namespace RSDK
+
+#endif
