@@ -207,4 +207,4 @@ inline void WriteText(FileIO *file, const char *string, ...)
 
 } // namespace RSDK
 
-#endif
+#endif // !USER_CORE_H
