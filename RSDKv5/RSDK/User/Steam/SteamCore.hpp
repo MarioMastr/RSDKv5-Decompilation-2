@@ -1,5 +1,5 @@
 #if RETRO_REV02
-bool32 CheckDLCs();
+#define DLC_COUNT 8
 
 class SteamCallbacks
 {
@@ -10,6 +10,7 @@ public:
 
 extern SteamCallbacks* SteamCallbacksInstance;
 extern bool32 SteamUserStatsReceived;
+extern bool32 EnabledDLC[DLC_COUNT];
 
 struct SteamCore : SKU::UserCore {
     void Shutdown()
@@ -43,7 +44,9 @@ struct SteamCore : SKU::UserCore {
     void ExitGame() { RenderDevice::isRunning = false; }
     bool32 CheckDLC(uint8 id)
     {
-        return CheckDLCs();
+        if (id >= 0 && id <= 8)
+            return EnabledDLC[id];
+        return false;
     }
     bool32 IsOverlayEnabled(uint32 overlay)
     {

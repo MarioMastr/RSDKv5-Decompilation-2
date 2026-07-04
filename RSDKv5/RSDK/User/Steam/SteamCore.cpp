@@ -5,8 +5,9 @@ using namespace RSDK;
 
 SKU::SteamCallbacks* SteamCallbacksInstance = nullptr;
 bool32 SteamUserStatsReceived = false;
+bool32 EnabledDLC[DLC_COUNT];
 
-bool32 CheckDLCs()
+void CheckDLCs()
 {
     AppId_t gameID;
 #if RETRO_REV0U
@@ -23,8 +24,8 @@ bool32 CheckDLCs()
 #else
     gameID = 845640;
 #endif
-
-    return SteamApps()->BIsSubscribedApp(gameID);
+    for (int i = 0; i < DLC_COUNT; ++i)
+        EnabledDLC[i] = SteamApps()->BIsSubscribedApp(gameID);
 }
 
 void SKU::SteamCallbacks::OnUserStatsReceived(UserStatsReceived_t* pCallback)
@@ -87,6 +88,8 @@ SKU::SteamCore *InitSteamCore()
         if (!SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID()))
             PrintLog(PRINT_NORMAL, "Failed to request current stats from Steam.");
     }
+
+    CheckDLCs();
 
     // Initalize API subsystems
     SteamCore *core = new SteamCore;
