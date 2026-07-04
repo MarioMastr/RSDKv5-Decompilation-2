@@ -57,6 +57,7 @@ set(RETRO_FILES
     dependencies/all/miniz/miniz.c
 )
 
+
 if(NOT PLATFORM)
     if(WIN32) # THIS ASSUMES VCPKG OR SOURCES !!!!!!!
         set(PLATFORM "Windows" CACHE STRING "The platform to compile for.")
@@ -65,6 +66,21 @@ if(NOT PLATFORM)
     else()
         set(PLATFORM ${CMAKE_SYSTEM_NAME} CACHE STRING "The platform to compile for.")
     endif()
+endif()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+	message("System is supected to be 32 bit")
+	set(RETRO_ARCH "32")
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message("System is supected to be 64 bit")
+	set(RETRO_ARCH "64")
+else()
+	message("Error detecting system architecture")
+	set(RETRO_ARCH "INVALID")
+endif()
+
+if(RETRO_USERCORE_ID STREQUAL "1")
+    set(STEAMWORKS_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/all/steamworks_sdk")
 endif()
 
 include(platforms/${PLATFORM}.cmake)
@@ -144,12 +160,8 @@ target_include_directories(RetroEngine PRIVATE
 
 if (RETRO_USERCORE_ID STREQUAL "1")
     target_include_directories(RetroEngine PRIVATE
-        dependencies/all/steam/include
+        dependencies/all/steamworks_sdk/public
     )
-    target_link_directories(RetroEngine PRIVATE
-        dependencies/all/steam/lib
-    )
-    target_link_libraries(RetroEngine steam_api)
 endif()
 
 if(DEFINED DEP_PATH)

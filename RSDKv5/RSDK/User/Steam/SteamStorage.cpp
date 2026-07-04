@@ -23,20 +23,23 @@ void SKU::SteamUserStorage::CopySave(bool save, const char *filename) {
         realpath(steamFilePathFake, steamFilePath);
 
         FILE *steamFileRead = fopen(steamFilePath, "r");
-        FILE *localFileRead = fopen(localFilePath, "r");
 
         if (steamFileRead) {
-            if (!save && localFileRead) {
-                FILE *steamFileWrite = fopen(steamFilePath, "w");
-                while (1) {
-                    char data = fgetc(localFileRead);
-                    if (data != EOF)
-                        fputc(data, steamFileWrite);
-                    else
-                        break;
-                }
+            if (!save) {
+                FILE *localFileRead = fopen(localFilePath, "r");
+                if (localFileRead) {
+                    FILE *steamFileWrite = fopen(steamFilePath, "w");
+                    while (1) {
+                        char data = fgetc(localFileRead);
+                        if (data != EOF)
+                            fputc(data, steamFileWrite);
+                        else
+                            break;
+                    }
 
-                fclose(steamFileWrite);
+                    fclose(steamFileWrite);
+                    fclose(localFileRead);
+                }
             }
             else if (save) {
                 FILE *localFileWrite = fopen(localFilePath, "w");
@@ -54,7 +57,6 @@ void SKU::SteamUserStorage::CopySave(bool save, const char *filename) {
         }
 
         fclose(steamFileRead);
-        fclose(localFileRead);
     }
     else
         PrintLog(PRINT_ERROR, "Steam userdata folder not found.");

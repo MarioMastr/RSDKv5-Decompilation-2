@@ -540,7 +540,7 @@ extern "C" {
 #include <theora/theoradec.h>
 
 #if RETRO_USERCORE_STEAM
-#include <steam_api.h>
+#include <steam/steam_api.h>
 #endif
 
 // ============================
