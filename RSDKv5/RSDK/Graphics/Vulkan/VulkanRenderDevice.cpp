@@ -614,9 +614,9 @@ bool RenderDevice::InitGraphicsAPI()
 
     uint32_t framesInFlight = videoSettings.tripleBuffered ? 2 : 1;
 
-    waitSemaphore.reserve(framesInFlight);
-    flightFence.reserve(framesInFlight);
-    commandBuffers.reserve(framesInFlight);
+    waitSemaphore.resize(framesInFlight);
+    flightFence.resize(framesInFlight);
+    commandBuffers.resize(framesInFlight);
 
     //! CREATE SWAPCHAIN
     uint32_t imageCount = currentSwapDetails.capabilities.minImageCount + 1;
@@ -624,7 +624,7 @@ bool RenderDevice::InitGraphicsAPI()
         imageCount = currentSwapDetails.capabilities.maxImageCount;
     }
 
-    signalSemaphore.reserve(imageCount);
+    signalSemaphore.resize(imageCount);
 
     VkSwapchainCreateInfoKHR swapCreateInfo{};
     swapCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -1699,12 +1699,12 @@ void RenderDevice::Release(bool32 isRefresh)
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-    for (int32 i = 0; i < waitSemaphore.capacity(); i++) {
+    for (int32 i = 0; i < waitSemaphore.size(); i++) {
         vkDestroySemaphore(device, waitSemaphore[i], nullptr);
         vkDestroyFence(device, flightFence[i], nullptr);
     }
 
-    for (int32 i = 0; i < signalSemaphore.capacity(); i++) {
+    for (int32 i = 0; i < signalSemaphore.size(); i++) {
         vkDestroySemaphore(device, signalSemaphore[i], nullptr);
 }
 
