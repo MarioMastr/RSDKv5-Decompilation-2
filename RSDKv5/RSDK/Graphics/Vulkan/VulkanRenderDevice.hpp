@@ -178,7 +178,7 @@ private:
     static VkDeviceMemory vertexBufferMemory;
 
     static VkCommandPool commandPool;
-    static VkCommandBuffer commandBuffer;
+    static std::vector<VkCommandBuffer> commandBuffers;
 
     static VkQueue graphicsQueue;
     static VkQueue presentQueue;
@@ -188,9 +188,9 @@ private:
     static VkViewport viewport;
     static VkRect2D scissors;
 
-    static VkSemaphore imageAvailableSemaphore;
-    static VkSemaphore renderFinishedSemaphore;
-    static VkFence inFlightFence;
+    static std::vector<VkSemaphore> waitSemaphore;
+    static std::vector<VkSemaphore> signalSemaphore;
+    static std::vector<VkFence> flightFence;
 
     static int32 monitorIndex;
 
