@@ -884,7 +884,6 @@ bool RenderDevice::InitGraphicsAPI()
         }
     }
 
-
     //! TEXTURE CREATION
     for (int32 i = 0; i < SCREEN_COUNT; ++i) {
         VkImageCreateInfo imageInfo{};
