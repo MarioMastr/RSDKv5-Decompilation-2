@@ -856,8 +856,11 @@ bool RenderDevice::InitGraphicsAPI()
     cmdAllocInfo.commandPool        = commandPool;
     cmdAllocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     cmdAllocInfo.commandBufferCount = framesInFlight;
-    vkAllocateCommandBuffers(device, &cmdAllocInfo, commandBuffers.data());
 
+    if (vkAllocateCommandBuffers(device, &cmdAllocInfo, commandBuffers.data()) != VK_SUCCESS) {
+        PrintLog(PRINT_NORMAL, "[VK] Failed to create command buffer");
+        return false;
+    }
 
     //! CREATE SYNCHRONIZATION OBJECTS
     VkSemaphoreCreateInfo semaphoreInfo{};
