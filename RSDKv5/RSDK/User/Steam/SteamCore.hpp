@@ -11,33 +11,14 @@ public:
 extern SteamCallbacks* SteamCallbacksInstance;
 extern bool32 SteamUserStatsReceived;
 extern bool32 EnabledDLC[DLC_COUNT];
-
-// chinese isn't supported by steam
-int32 LanguageValue(const char *steamLang)
-{
-    if (strcmp(steamLang, "english"))
-        return LANGUAGE_EN;
-    else if (strcmp(steamLang, "french"))
-        return LANGUAGE_FR;
-    else if (strcmp(steamLang, "italian"))
-        return LANGUAGE_IT;
-    else if (strcmp(steamLang, "german"))
-        return LANGUAGE_GE;
-    else if (strcmp(steamLang, "spanish"))
-        return LANGUAGE_SP;
-    else if (strcmp(steamLang, "japanese"))
-        return LANGUAGE_JP;
-    else if (strcmp(steamLang, "korean"))
-        return LANGUAGE_KO;
-    // else if (strcmp(steamLang, "simp-chinese"))
-        // return LANGUAGE_SC;
-    // else if (strcmp(steamLang, "trad-chinese"))
-        // return LANGUAGE_TC;
-    else
-        return 0;
-}
+extern void CheckDLCs();
+extern int32 LanguageValue(const char *steamLang);
 
 struct SteamCore : SKU::UserCore {
+    SteamCore()
+    {
+        CheckDLCs();
+    }
     void Shutdown()
     {
         SteamAPI_Shutdown();
@@ -65,7 +46,9 @@ struct SteamCore : SKU::UserCore {
     int32 GetUserRegion() { return REGION_US; }
     int32 GetUserPlatform() { return PLATFORM_PC; }
     bool32 GetConfirmButtonFlip() { return false; }
-    void LaunchManual() {}
+    void LaunchManual() {
+        SteamFriends()->ActivateGameOverlayToWebPage("http://www.sonicthehedgehog.com/mania/manual");
+    }
     void ExitGame() { RenderDevice::isRunning = false; }
     bool32 CheckDLC(uint8 id)
     {

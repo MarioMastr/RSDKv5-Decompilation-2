@@ -7,6 +7,19 @@ SKU::SteamCallbacks* SteamCallbacksInstance = nullptr;
 bool32 SteamUserStatsReceived = false;
 bool32 EnabledDLC[DLC_COUNT];
 
+void SKU::SteamCallbacks::OnUserStatsReceived(UserStatsReceived_t* pCallback)
+{
+    SteamUserStatsReceived = pCallback->m_eResult == k_EResultOK;
+    PrintLog(PRINT_NORMAL, "Logged into Steam account %lld", pCallback->m_steamIDUser.GetAccountID());
+}
+
+void SKU::SteamCallbacks::GameOverlayActivated(GameOverlayActivated_t* pCallback)
+{
+    // Check for DLC when the overlay closes
+    if (!pCallback->m_bActive)
+        CheckDLCs();
+}
+
 void CheckDLCs()
 {
     AppId_t gameID;
@@ -28,17 +41,29 @@ void CheckDLCs()
         EnabledDLC[i] = SteamApps()->BIsSubscribedApp(gameID);
 }
 
-void SKU::SteamCallbacks::OnUserStatsReceived(UserStatsReceived_t* pCallback)
+// chinese isn't supported by steam
+int32 LanguageValue(const char *steamLang)
 {
-    SteamUserStatsReceived = pCallback->m_eResult == k_EResultOK;
-    PrintLog(PRINT_NORMAL, "Logged into Steam account %lld", pCallback->m_steamIDUser.GetAccountID());
-}
-
-void SKU::SteamCallbacks::GameOverlayActivated(GameOverlayActivated_t* pCallback)
-{
-    // Check for DLC when the overlay closes
-    if (!pCallback->m_bActive)
-        CheckDLCs();
+    if (!strcmp(steamLang, "english"))
+        return LANGUAGE_EN;
+    else if (!strcmp(steamLang, "french"))
+        return LANGUAGE_FR;
+    else if (!strcmp(steamLang, "italian"))
+        return LANGUAGE_IT;
+    else if (!strcmp(steamLang, "german"))
+        return LANGUAGE_GE;
+    else if (!strcmp(steamLang, "spanish"))
+        return LANGUAGE_SP;
+    else if (!strcmp(steamLang, "japanese"))
+        return LANGUAGE_JP;
+    else if (!strcmp(steamLang, "korean"))
+        return LANGUAGE_KO;
+    // else if (!strcmp(steamLang, "simp-chinese"))
+        // return LANGUAGE_SC;
+    // else if (!strcmp(steamLang, "trad-chinese"))
+        // return LANGUAGE_TC;
+    else
+        return 0;
 }
 
 SKU::SteamCore *InitSteamCore()
@@ -88,8 +113,6 @@ SKU::SteamCore *InitSteamCore()
         if (!SteamUserStats()->RequestUserStats(SteamUser()->GetSteamID()))
             PrintLog(PRINT_NORMAL, "Failed to request current stats from Steam.");
     }
-
-    CheckDLCs();
 
     // Initalize API subsystems
     SteamCore *core = new SteamCore;
