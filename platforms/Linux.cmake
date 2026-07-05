@@ -8,6 +8,36 @@ add_executable(RetroEngine ${RETRO_FILES})
 set(RETRO_SUBSYSTEM "OGL" CACHE STRING "The subsystem to use")
 option(USE_SDL_AUDIO "Whether or not to use SDL for audio instead of the default MiniAudio." OFF)
 
+if(RETRO_USERCORE_ID STREQUAL "1")
+    if(RETRO_ARCH STREQUAL "64")
+        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux64")
+
+        find_library(STEAM_API_LIB
+            NAMES steam_api
+            PATHS "${STEAMWORKS_REDIST_BIN}"
+
+            NO_DEFAULT_PATH
+        )
+    elseif(RETRO_ARCH STREQUAL "32")
+        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux32")
+
+        find_library(STEAM_API_LIB
+            NAMES steam_api
+            PATHS "${STEAMWORKS_REDIST_BIN}"
+
+            NO_DEFAULT_PATH
+        )
+    endif()
+
+    if(NOT STEAM_API_LIB)
+        message(FATAL_ERROR "Steam API library not found in ${STEAMWORKS_REDIST_BIN}")
+	else()
+		message("found Steam API")
+	endif()
+
+	target_link_libraries(RetroEngine ${STEAM_API_LIB})
+endif()
+
 # Some distros like Debian 11 need this to prevent link errors (used by std::thread in Audio devices)
 find_package(Threads REQUIRED)
 target_link_libraries(RetroEngine Threads::Threads)
@@ -92,34 +122,4 @@ if(NOT RETRO_SUBSYSTEM STREQUAL SDL2)
         target_compile_options(RetroEngine PRIVATE ${SDL2_STATIC_CFLAGS})
         target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_SDL2=1)
     endif()
-endif()
-
-if(RETRO_USERCORE_ID STREQUAL "1")
-    if(RETRO_ARCH STREQUAL "64")
-        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux64")
-
-        find_library(STEAM_API_LIB
-            NAMES steam_api
-            PATHS "${STEAMWORKS_REDIST_BIN}"
-
-            NO_DEFAULT_PATH
-        )
-    elseif(RETRO_ARCH STREQUAL "32")
-        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux32")
-
-        find_library(STEAM_API_LIB
-            NAMES steam_api
-            PATHS "${STEAMWORKS_REDIST_BIN}"
-
-            NO_DEFAULT_PATH
-        )
-    endif()
-
-    if(NOT STEAM_API_LIB)
-        message(FATAL_ERROR "Steam API library not found in ${STEAMWORKS_REDIST_BIN}")
-	else()
-		message("found Steam API")
-	endif()
-
-	target_link_libraries(RetroEngine ${STEAM_API_LIB})
 endif()
