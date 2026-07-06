@@ -15,13 +15,21 @@ RSDK::APITableEntry RSDK::APIFunctionTable[APITABLE_COUNT];
 int32 RSDK::APIFunctionTableCount;
 #endif
 
+#if RETRO_REV0U
+void *RSDK::HEBridgeFunctionTable[HEBridgeTable_Count];
+#endif
+
 RSDK::GameVersionInfo RSDK::gameVerInfo;
 
 void NullFunc() {}
+#if RETRO_REV0U
+int32 Func200() { return 200; }
+#endif // RETRO_REV0U
 
 #define ADD_RSDK_FUNCTION(id, func) RSDKFunctionTable[id] = (void *)func;
 #if RETRO_REV02
 #define ADD_API_FUNCTION(id, func) APIFunctionTable[id] = (void *)func;
+#define ADD_HE_FUNCTION(id, func)  HEBridgeFunctionTable[id] = (void *)func;
 #else
 #define ADD_API_FUNCTION(name, func) SetAPIFunction(name, (void *)func);
 
@@ -81,6 +89,9 @@ void RSDK::SetupFunctionTables()
     memset(RSDKFunctionTable, 0, sizeof(RSDKFunctionTable));
 #if RETRO_REV02
     memset(APIFunctionTable, 0, sizeof(APIFunctionTable));
+#endif
+#if RETRO_REV0U
+    memset(HEBridgeFunctionTable, 0, sizeof(HEBridgeFunctionTable));
 #endif
 
 #if RETRO_REV02
@@ -241,6 +252,17 @@ void RSDK::SetupFunctionTables()
     ADD_API_FUNCTION("SetInputLEDColor", SetInputLEDColor);
 #endif
 
+#if RETRO_REV0U
+    // ============================
+    // Hedgehog Engine Bridge Function Table
+    // ============================
+    ADD_HE_FUNCTION(HEBridgeTable_LoadUserFile, LoadUserFile);
+    ADD_HE_FUNCTION(HEBridgeTable_TryLoadUserFile, TryLoadUserFile);
+    ADD_HE_FUNCTION(HEBridgeTable_SaveUserFile, SaveUserFile);
+    ADD_HE_FUNCTION(HEBridgeTable_TrySaveUserFile, TrySaveUserFileHE);
+    ADD_HE_FUNCTION(HEBridgeTable_StatusOK, Func200);
+    ADD_HE_FUNCTION(HEBridgeTable_StatusOK2, Func200);
+#endif
     // ============================
     // RSDK Function Table
     // ============================
@@ -526,7 +548,7 @@ void RSDK::SetupFunctionTables()
 
     // v5U Extras
 #if RETRO_REV0U
-    ADD_RSDK_FUNCTION(FunctionTable_NotifyCallback, NULL);
+    ADD_RSDK_FUNCTION(FunctionTable_NotifyCallback, OnCallbackNotify);
     ADD_RSDK_FUNCTION(FunctionTable_SetGameFinished, SetGameFinished);
     ADD_RSDK_FUNCTION(FunctionTable_StopAllSfx, StopAllSfx);
 #endif

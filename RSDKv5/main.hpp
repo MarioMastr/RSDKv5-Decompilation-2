@@ -8,6 +8,11 @@
 #define DLLExport
 #endif
 
+extern char modPath[MAX_PATH];
+#if RETRO_RENDERDEVICE_DIRECTX9 || RETRO_RENDERDEVICE_DIRECTX11
+extern HMODULE DllHandle;
+#endif
+
 extern "C" {
 DLLExport int32 RSDK_main(int32 argc, char **argv, void *linkLogicPtr);
 }

@@ -246,8 +246,13 @@ struct ModInfo {
 };
 
 struct StateHook {
-    void (*state)();
+#if RETRO_REV0U
+	void (*state)(void*);
+    bool32 (*hook)(bool32 skippedState, void *data);
+#else
+	void (*state)();
     bool32 (*hook)(bool32 skippedState);
+#endif
     bool32 priority;
 };
 
@@ -398,10 +403,17 @@ void GetAchievementInfo(uint32 id, String *name, String *description, String *id
 int32 GetAchievementIndexByID(const char *id);
 int32 GetAchievementCount();
 
+#if RETRO_REV0U
+void StateMachineRun(void (*state)(void *), void *data);
+bool32 HandleRunState_HighPriority(void *state, void *data);
+void HandleRunState_LowPriority(void *state, void *data, bool32 skipState);
+void RegisterStateHook(void (*state)(void *), bool32 (*hook)(bool32 skippedState, void *data), bool32 priority);
+#else
 void StateMachineRun(void (*state)(void));
 bool32 HandleRunState_HighPriority(void (*state)(void));
 void HandleRunState_LowPriority(void (*state)(void), bool32 skipState);
 void RegisterStateHook(void (*state)(void), bool32 (*hook)(bool32 skippedState), bool32 priority);
+#endif
 
 #if RETRO_MOD_LOADER_VER >= 2
 

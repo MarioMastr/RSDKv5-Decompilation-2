@@ -15,6 +15,10 @@ Link::Handle gameLogicHandle = NULL;
 #include <unistd.h>
 #endif
 
+#if RETRO_PLATFORM == RETRO_WIN
+bool32 consoleAllocated = NULL;
+#endif
+
 int32 *RSDK::globalVarsPtr = NULL;
 #if RETRO_REV0U
 void (*RSDK::globalVarsInitCB)(void *globals) = NULL;
@@ -25,6 +29,10 @@ RetroEngine RSDK::engine = RetroEngine();
 int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 {
     ParseArguments(argc, argv);
+
+    // Enable console if one has already been allocated
+    if (GetConsoleWindow())
+        engine.consoleEnabled = true;
 
     if (engine.consoleEnabled)
         InitConsole();
@@ -66,6 +74,7 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 
 #if RETRO_REV0U
         engine.version = 0;
+        AddPublicFunctions();
         InitModAPI(true); // check for versions
         engine.version = 5;
 #endif
@@ -87,6 +96,7 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
             return 0;
         }
 
+        OnEngineInit();
         InitEngine();
 #if RETRO_USE_MOD_LOADER
         // we confirmed the game actually is valid & running, lets start some callbacks
@@ -120,6 +130,8 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 
 #if RETRO_REV02
             SKU::userCore->FrameInit();
+
+            OnFrameInit();
 
             if (SKU::userCore->CheckEnginePause())
                 continue;
@@ -180,7 +192,8 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
                     if (((engine.version == 5 && sceneInfo.state != ENGINESTATE_DEVMENU)
                          || (engine.version != 5 && RSDK::Legacy::gameMode != RSDK::Legacy::ENGINE_DEVMENU))
                         && devMenu.modsChanged) {
-                        engine.version = 0;
+                        int32 preVersion = engine.version;
+                        engine.version   = 0;
 #else
                     if (sceneInfo.state != ENGINESTATE_DEVMENU && devMenu.modsChanged) {
 #endif
@@ -194,8 +207,6 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 #endif
 
 #if RETRO_REV0U
-                        int32 preVersion = engine.version;
-
                         DetectEngineVersion();
                         if (!engine.version)
                             engine.version = preVersion;
@@ -323,6 +334,7 @@ int32 RSDK::RunRetroEngine(int32 argc, char *argv[])
 
     // Shutdown
 
+    OnEngineShutdown();
     ReleaseInputDevices();
     AudioDevice::Release();
     RenderDevice::Release(false);
@@ -362,6 +374,8 @@ void RSDK::ProcessEngine()
 
 #if RETRO_REV02
 #if !RETRO_USE_ORIGINAL_CODE
+                // S3K event
+                OnStageLoad();
                 AddViewableVariable("Show Hitboxes", &showHitboxes, VIEWVAR_BOOL, false, true);
                 AddViewableVariable("Show Palettes", &engine.showPaletteOverlay, VIEWVAR_BOOL, false, true);
                 AddViewableVariable("Show Obj Range", &engine.showUpdateRanges, VIEWVAR_UINT8, 0, 2);
@@ -578,6 +592,9 @@ void RSDK::ProcessEngine()
             DrawRectangle(0, currentScreen->center.y - (yOff >> 1), currentScreen->size.x, yOff, 0xF00000, 255, INK_NONE, true);
             DrawDevString(outputString, 8, currentScreen->center.y - (yOff >> 1) + 8, 0, 0xF0F0F0);
             break;
+        }
+        case ENGINESTATE_GAME_FINISHED: {
+            OnGameFinish();
         }
 #endif
     }
@@ -1232,6 +1249,7 @@ void RSDK::LoadGameConfig()
 #if RETRO_REV0U
         if (globalVarsInitCB)
             globalVarsInitCB(globalVarsPtr);
+        OnGlobalsLoaded(globalVarsPtr);
 #endif
 
         sceneInfo.listPos = sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetStart + startScene;
@@ -1299,6 +1317,8 @@ void RSDK::InitGameLink()
     info.unknown = &SKU::unknownInfo;
 
     info.screenInfo = screens;
+
+    info.hedgehogLink = HEBridgeFunctionTable;
 
 #if RETRO_USE_MOD_LOADER
     info.modTable = modFunctionTable;
@@ -1550,7 +1570,7 @@ void RSDK::ReleaseCoreAPI()
 void RSDK::InitConsole()
 {
 #if RETRO_PLATFORM == RETRO_WIN
-    AllocConsole();
+    consoleAllocated = AllocConsole();
     AttachConsole(GetCurrentProcessId());
 
     freopen("CON", "w", stdout);
@@ -1563,7 +1583,8 @@ void RSDK::InitConsole()
 void RSDK::ReleaseConsole()
 {
 #if RETRO_PLATFORM == RETRO_WIN
-    FreeConsole();
+    if (consoleAllocated)
+        FreeConsole();
 #endif
 }
 

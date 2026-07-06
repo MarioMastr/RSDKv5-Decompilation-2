@@ -464,6 +464,21 @@
     <ClCompile Include="..\RSDKv5\RSDK\Core\Legacy\ModAPILegacy.cpp">
       <Filter>Source Files\RSDK\Core\Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="..\RSDKv5\S3K.cpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RSDKv5\SigScan.cpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RSDKv5\Symbols.cpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RSDKv5\Patches.cpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RSDKv5\S3KFunctions.cpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dependencies\all\tinyxml2\tinyxml2.h">
@@ -771,6 +786,21 @@
     </ClInclude>
     <ClInclude Include="..\RSDKv5\RSDK\Core\Legacy\ModAPILegacy.hpp">
       <Filter>Source Files\RSDK\Core\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RSDKv5\S3K.hpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RSDKv5\SigScan.h">
+      <Filter>Source Files\RSDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RSDKv5\Symbols.h">
+      <Filter>Source Files\RSDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RSDKv5\Patches.hpp">
+      <Filter>Source Files\RSDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RSDKv5\S3KFunctions.hpp">
+      <Filter>Source Files\RSDK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

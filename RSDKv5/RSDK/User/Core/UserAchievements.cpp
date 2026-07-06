@@ -15,11 +15,13 @@ namespace SKU
 
 // Steam API
 #if RETRO_USERCORE_STEAM
+#include "steam_api.h"
 #include "RSDK/User/Steam/SteamAchievements.cpp"
 #endif
 
 // Epic Games API
 #if RETRO_USERCORE_EOS
+#include "eos/eos_achievements.h"
 #include "RSDK/User/EOS/EOSAchievements.cpp"
 #endif
 

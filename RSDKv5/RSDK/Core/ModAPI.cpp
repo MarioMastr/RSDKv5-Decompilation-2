@@ -564,7 +564,7 @@ void RSDK::LoadMods(bool newOnly, bool32 getVersion)
 
     using namespace std;
     char modBuf[0x100];
-    sprintf_s(modBuf, sizeof(modBuf), "%smods", SKU::userFileDir);
+    sprintf_s(modBuf, sizeof(modBuf), "%smods_decomp", SKU::userFileDir);
     fs::path modPath(modBuf);
 
     if (fs::exists(modPath) && fs::is_directory(modPath)) {
@@ -958,7 +958,7 @@ void RSDK::SaveMods()
 {
     ModInfo *cur = currentMod;
     char modBuf[0x100];
-    sprintf_s(modBuf, sizeof(modBuf), "%smods/", SKU::userFileDir);
+    sprintf_s(modBuf, sizeof(modBuf), "%smods_decomp/", SKU::userFileDir);
     fs::path modPath(modBuf);
 
     SortMods();
@@ -1089,6 +1089,7 @@ void RSDK::AddModCallback_STD(int32 callbackID, ModCallbackSTD callback)
 
 void RSDK::AddPublicFunction(const char *functionName, void *functionPtr)
 {
+	//PrintLog(PRINT_NORMAL, "Added function: %s = 0x%llx", functionName, functionPtr);
     if (!currentMod)
         return gamePublicFuncs.push_back({ functionName, functionPtr });
     if (!currentMod->active)
@@ -1913,7 +1914,59 @@ int32 RSDK::GetAchievementIndexByID(const char *id)
 }
 int32 RSDK::GetAchievementCount() { return (int32)achievementList.size(); }
 
-void RSDK::StateMachineRun(void (*state)(void))
+#if RETRO_REV0U
+void RSDK::StateMachineRun(void (*state)(void*), void* data)
+{
+    bool32 skipState = false;
+
+    for (int32 h = 0; h < (int32)stateHookList.size(); ++h) {
+        if (stateHookList[h].priority && stateHookList[h].state == state && stateHookList[h].hook)
+            skipState |= stateHookList[h].hook(skipState, data);
+    }
+
+    if (!skipState && state)
+        state(data);
+
+    for (int32 h = 0; h < (int32)stateHookList.size(); ++h) {
+        if (!stateHookList[h].priority && stateHookList[h].state == state && stateHookList[h].hook)
+            stateHookList[h].hook(skipState, data);
+    }
+}
+
+bool32 RSDK::HandleRunState_HighPriority(void *state, void *data)
+{
+    bool32 skipState = false;
+
+    for (int32 h = 0; h < (int32)stateHookList.size(); ++h) {
+        if (stateHookList[h].priority && stateHookList[h].state == state && stateHookList[h].hook)
+            skipState |= stateHookList[h].hook(skipState, data);
+    }
+
+    return skipState;
+}
+
+void RSDK::HandleRunState_LowPriority(void *state, void *data, bool32 skipState)
+{
+    for (int32 h = 0; h < (int32)stateHookList.size(); ++h) {
+        if (!stateHookList[h].priority && stateHookList[h].state == state && stateHookList[h].hook)
+            stateHookList[h].hook(skipState, data);
+    }
+}
+
+void RSDK::RegisterStateHook(void (*state)(void *), bool32 (*hook)(bool32 skippedState, void *data), bool32 priority)
+{
+    if (!state)
+        return;
+
+    StateHook stateHook;
+    stateHook.state    = state;
+    stateHook.hook     = hook;
+    stateHook.priority = priority;
+
+    stateHookList.push_back(stateHook);
+}
+#else
+void RSDK::StateMachineRun(void (*state)())
 {
     bool32 skipState = false;
 
@@ -1963,6 +2016,7 @@ void RSDK::RegisterStateHook(void (*state)(void), bool32 (*hook)(bool32 skippedS
 
     stateHookList.push_back(stateHook);
 }
+#endif
 
 #if RETRO_MOD_LOADER_VER >= 2
 

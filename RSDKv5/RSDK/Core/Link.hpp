@@ -324,6 +324,18 @@ enum FunctionTableIDs {
     FunctionTable_Count,
 };
 
+#if RETRO_REV0U
+enum HEBridgeFunctionTableIDs {
+    HEBridgeTable_LoadUserFile,
+    HEBridgeTable_TryLoadUserFile,
+    HEBridgeTable_SaveUserFile,
+    HEBridgeTable_TrySaveUserFile,
+    HEBridgeTable_StatusOK,
+    HEBridgeTable_StatusOK2,
+    HEBridgeTable_Count,
+};
+#endif
+
 extern void *RSDKFunctionTable[FunctionTable_Count];
 #if RETRO_REV02
 extern void *APIFunctionTable[APITable_Count];
@@ -336,7 +348,9 @@ struct APITableEntry {
 extern APITableEntry APIFunctionTable[APITABLE_COUNT];
 extern int32 APIFunctionTableCount;
 #endif
-
+#if RETRO_REV0U
+extern void *HEBridgeFunctionTable[HEBridgeTable_Count];
+#endif
 #if RETRO_REV02
 struct EngineInfo {
     void *functionTable;

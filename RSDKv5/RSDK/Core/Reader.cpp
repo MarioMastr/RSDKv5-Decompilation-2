@@ -2,6 +2,10 @@
 
 using namespace RSDK;
 
+// HiteModLoader
+// Links to main.cpp
+void GetRedirectedPath(const char *path, char *out);
+
 RSDKFileInfo RSDK::dataFileList[DATAFILE_COUNT];
 RSDKContainer RSDK::dataPacks[DATAPACK_COUNT];
 
@@ -132,16 +136,17 @@ bool32 RSDK::LoadDataPack(const char *filePath, size_t fileOffset, bool32 useBuf
             uint8 b[4];
             for (int32 y = 0; y < 4; y++) {
                 ReadBytes(&info, b, 4);
-                dataFileList[f].hash[y] = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | (b[3] << 0);
+                dataFileList[dataFileListCount].hash[y] = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | (b[3] << 0);
             }
 
-            dataFileList[f].offset = ReadInt32(&info, false);
-            dataFileList[f].size   = ReadInt32(&info, false);
+            dataFileList[dataFileListCount].offset = ReadInt32(&info, false);
+            dataFileList[dataFileListCount].size   = ReadInt32(&info, false);
 
-            dataFileList[f].encrypted = (dataFileList[f].size & 0x80000000) != 0;
-            dataFileList[f].size &= 0x7FFFFFFF;
-            dataFileList[f].useFileBuffer = useBuffer;
-            dataFileList[f].packID        = dataPackCount;
+            dataFileList[dataFileListCount].encrypted = (dataFileList[dataFileListCount].size & 0x80000000) != 0;
+            dataFileList[dataFileListCount].size &= 0x7FFFFFFF;
+            dataFileList[dataFileListCount].useFileBuffer = useBuffer;
+            dataFileList[dataFileListCount].packID        = dataPackCount;
+            ++dataFileListCount;
         }
 
         dataPacks[dataPackCount].fileBuffer = NULL;
@@ -151,7 +156,6 @@ bool32 RSDK::LoadDataPack(const char *filePath, size_t fileOffset, bool32 useBuf
             ReadBytes(&info, dataPacks[dataPackCount].fileBuffer, info.fileSize);
         }
 
-        dataFileListCount += dataPacks[dataPackCount].fileCount;
         dataPackCount++;
 
         CloseFile(&info);
@@ -237,14 +241,19 @@ bool32 RSDK::LoadFile(FileInfo *info, const char *filename, uint8 fileMode)
     if (info->file)
         return false;
 
-    char fullFilePath[0x100];
-    strcpy(fullFilePath, filename);
+    char fullFilePath[0x100]{};
+    // HiteModLoader
+    GetRedirectedPath(filename, fullFilePath);
+    if (fullFilePath[0])
+        info->externalFile = true;
+    else
+        strcpy(fullFilePath, filename);
 
 #if RETRO_USE_MOD_LOADER
     char pathLower[0x100];
-    memset(pathLower, 0, sizeof(pathLower));
-    for (int32 c = 0; c < strlen(filename); ++c) pathLower[c] = tolower(filename[c]);
-
+    int32 c = 0;
+    for (; filename[c] != '\0'; ++c) pathLower[c] = tolower(filename[c]);
+    pathLower[c] = '\0';
     bool32 addPath = false;
     int32 m        = modSettings.activeMod != -1 ? modSettings.activeMod : 0;
     for (; m < modList.size(); ++m) {

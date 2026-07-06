@@ -1,6 +1,6 @@
 project(RetroEngine)
 
-add_executable(RetroEngine WIN32 ${RETRO_FILES})
+add_library(RetroEngine SHARED ${RETRO_FILES})
 
 set(RETRO_SUBSYSTEM "DX9" CACHE STRING "The subsystem to use")
 option(USE_MINIAUDIO "Whether or not to use MiniAudio or default to XAudio." OFF)
@@ -9,16 +9,7 @@ set(DEP_PATH windows)
 
 message(NOTICE "configuring for the " ${RETRO_SUBSYSTEM} " subsystem")
 
-find_package(Ogg CONFIG)
-
-if(NOT ${Ogg_FOUND})
-    set(COMPILE_OGG TRUE)
-    message(NOTICE "libogg not found, attempting to build from source")
-else()
-    message("found libogg")
-    add_library(libogg ALIAS Ogg::ogg)
-    target_link_libraries(RetroEngine libogg)
-endif()
+set(COMPILE_OGG TRUE)
 
 # i don't like this but it's what's on vcpkg so
 find_package(unofficial-theora CONFIG)
@@ -45,14 +36,14 @@ if(RETRO_SUBSYSTEM STREQUAL "DX9")
     target_link_libraries(RetroEngine
         d3d9
         d3dcompiler
-        XInput
+        xinput
     )
 elseif(RETRO_SUBSYSTEM STREQUAL "DX11")
     target_link_libraries(RetroEngine
         d3d11
         d3dcompiler
         DXGI
-        XInput
+        xinput
     )
 elseif(RETRO_SUBSYSTEM STREQUAL "OGL")
     find_package(glfw3 CONFIG)
@@ -126,9 +117,6 @@ target_sources(RetroEngine PRIVATE ${RETRO_NAME}/${RETRO_NAME}.rc)
 
 # Setup Detours
 if(RETRO_MOD_LOADER)
-    find_path(DETOURS_INCLUDE_DIRS "detours/detours.h")
-    find_library(DETOURS_LIBRARY detours REQUIRED)
-    target_include_directories(RetroEngine PRIVATE ${DETOURS_INCLUDE_DIRS})
-    target_link_libraries(RetroEngine ${DETOURS_LIBRARY})
+    target_link_libraries(RetroEngine ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/windows/detours.lib)
     set(RETRO_MOD_LOADER_HOOK ON)
 endif()

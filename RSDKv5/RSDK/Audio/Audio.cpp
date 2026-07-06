@@ -275,6 +275,10 @@ int32 RSDK::PlayStream(const char *filename, uint32 slot, uint32 startPos, uint3
 
     ChannelInfo *channel = &channels[slot];
 
+    int32 speed = TO_FIXED(1);
+    if (!OnStreamPlay((char **)&filename, &slot, &startPos, &loopPoint, &speed))
+        return slot;
+
     LockAudioDevice();
 
     channel->soundID      = 0xFF;
@@ -286,7 +290,7 @@ int32 RSDK::PlayStream(const char *filename, uint32 slot, uint32 startPos, uint3
     channel->sampleLength = sfxList[SFX_COUNT - 1].length;
     channel->samplePtr    = sfxList[SFX_COUNT - 1].buffer;
     channel->bufferPos    = 0;
-    channel->speed        = TO_FIXED(1);
+    channel->speed        = speed;
 
     sprintf_s(streamFilePath, sizeof(streamFilePath), "Data/Music/%s", filename);
     streamStartPos  = startPos;
@@ -436,10 +440,12 @@ void RSDK::LoadSfx(char *filename, uint8 plays, uint8 scope)
 
     if (id != (uint16)-1)
         LoadSfxToSlot(filename, id, plays, scope);
+		//PrintLog(PRINT_NORMAL, "loading sfx \"%s\", at id %d", filename, id); //ONLY USE THIS TO DEBUG A SOUND THAT GETS LOADED AND CRASHES. THIS GETS THE SOUND PATH OF THE ID.
 }
 
 int32 RSDK::PlaySfx(uint16 sfx, uint32 loopPoint, uint32 priority)
 {
+	//PrintLog(PRINT_NORMAL, "Playing sfx id %d, with looppoint %d", sfx, loopPoint); //ONLY USE THIS TO DEBUG A SOUND THAT GETS LOADED AND CRASHES. THIS SHOWS THE PLAYING ID WITH THE LOOP.
     if (sfx >= SFX_COUNT || !sfxList[sfx].scope)
         return -1;
 
@@ -484,6 +490,7 @@ int32 RSDK::PlaySfx(uint16 sfx, uint32 loopPoint, uint32 priority)
     if (slot == -1)
         return -1;
 
+    OnSfxPlay(&channels[slot]);
     LockAudioDevice();
 
     channels[slot].state        = CHANNEL_SFX;
@@ -508,6 +515,7 @@ int32 RSDK::PlaySfx(uint16 sfx, uint32 loopPoint, uint32 priority)
 
 void RSDK::SetChannelAttributes(int32 channel, float volume, float panning, float speed)
 {
+    OnChannelAttributesChanged(&channel, &volume, &panning, &speed);
     if (channel < CHANNEL_COUNT) {
         volume                   = fminf(4.0f, volume);
         volume                   = fmaxf(0.0f, volume);

@@ -1,6 +1,18 @@
 #include "RSDK/Core/RetroEngine.hpp"
-
 #include "iniparser/iniparser.h"
+
+#if RETRO_USERCORE_STEAM
+#include "steam_api.h"
+#endif
+
+#if RETRO_USERCORE_EOS
+#include "eos/eos_init.h"
+#include "eos/eos_sdk.h"
+#include "eos/eos_auth.h"
+#include "eos/eos_ecom.h"
+#include "eos/eos_achievements.h"
+#endif
+
 
 // ====================
 // API Cores
@@ -35,6 +47,8 @@ namespace SKU
 
 using namespace RSDK;
 
+const char *defaultDataPack = "..\\..\\..\\..\\image\\x64\\raw\\retro\\Sonic3ku.rsdk";
+
 #if RETRO_REV02
 SKU::UserCore *RSDK::SKU::userCore = NULL;
 #endif
@@ -51,17 +65,21 @@ void RSDK::SKU::InitUserCore()
 #endif
 
     // Initalize platform-specific subsystems here
+    userCore = nullptr;
 
 #if RETRO_USERCORE_STEAM
-    userCore = InitSteamCore();
+    if (!userCore)
+        userCore = InitSteamCore();
 #endif
 
 #if RETRO_USERCORE_EOS
-    userCore = InitEOSCore();
+    if (!userCore)
+        userCore = InitEOSCore();
 #endif
 
 #if RETRO_USERCORE_NX
-    userCore = InitNXCore();
+    if (!userCore)
+        userCore = InitNXCore();
 #endif
 
 #if RETRO_USERCORE_DUMMY
@@ -310,7 +328,7 @@ void RSDK::LoadSettingsINI()
 #endif
 
         engine.devMenu = true;
-        if (LoadDataPack(iniparser_getstring(ini, "Game:dataFile", "Data.rsdk"), 0, useBuffer))
+        if (LoadDataPack(iniparser_getstring(ini, "Game:dataFile", defaultDataPack), 0, useBuffer))
             engine.devMenu = iniparser_getboolean(ini, "Game:devMenu", false);
 
 #if !RETRO_USE_ORIGINAL_CODE
@@ -489,15 +507,15 @@ void RSDK::LoadSettingsINI()
     }
     else {
         videoSettings.windowed       = true;
-        videoSettings.bordered       = false;
-        videoSettings.exclusiveFS    = true;
+        videoSettings.bordered       = true;
+        videoSettings.exclusiveFS    = false;
         videoSettings.vsync          = true;
         videoSettings.tripleBuffered = false;
         videoSettings.shaderSupport  = true;
         videoSettings.pixWidth       = DEFAULT_PIXWIDTH;
         videoSettings.fsWidth        = 0;
-        videoSettings.windowWidth    = videoSettings.pixWidth * 1;
-        videoSettings.windowHeight   = SCREEN_YSIZE * 1;
+        videoSettings.windowWidth    = videoSettings.pixWidth * 4;
+        videoSettings.windowHeight   = SCREEN_YSIZE * 4;
         videoSettings.fsHeight       = 0;
         videoSettings.refreshRate    = 60;
         videoSettings.shaderID       = SHADER_NONE;
@@ -554,7 +572,7 @@ void RSDK::LoadSettingsINI()
         }
 
         SaveSettingsINI(true);
-        engine.devMenu = LoadDataPack("Data.rsdk", 0, useBuffer);
+        LoadDataPack(defaultDataPack, 0, useBuffer);
     }
 }
 
@@ -590,7 +608,7 @@ void RSDK::SaveSettingsINI(bool32 writeToFile)
         WriteText(file, "[Game]\n");
         if (ini) {
             if (strcmp(iniparser_getstring(ini, "Game:dataFile", ";unknown;"), ";unknown;") != 0 || (!RETRO_USE_ORIGINAL_CODE && RETRO_REV0U)) {
-                WriteText(file, "dataFile=%s\n", iniparser_getstring(ini, "Game:dataFile", "Data.rsdk"));
+                WriteText(file, "dataFile=%s\n", iniparser_getstring(ini, "Game:dataFile", defaultDataPack));
             }
 
             if (strcmp(iniparser_getstring(ini, "Game:devMenu", ";unknown;"), ";unknown;") != 0 || (!RETRO_USE_ORIGINAL_CODE && RETRO_REV0U))
