@@ -1,11 +1,26 @@
 project(RetroEngine)
 
+set(DEP_PATH windows)
+
+list(APPEND RETRO_FILES
+    dependencies/${DEP_PATH}/S3K/Patches.cpp
+    dependencies/${DEP_PATH}/S3K/S3K.cpp
+    dependencies/${DEP_PATH}/S3K/S3KFunctions.cpp
+    dependencies/${DEP_PATH}/S3K/SigScan.cpp
+    dependencies/${DEP_PATH}/S3K/Symbols.cpp
+    dependencies/${DEP_PATH}/dllmain.cpp
+)
+
+list(REMOVE_ITEM RETRO_FILES RSDKv5/main.cpp)
+
 add_library(RetroEngine SHARED ${RETRO_FILES})
 
 set(RETRO_SUBSYSTEM "DX9" CACHE STRING "The subsystem to use")
 option(USE_MINIAUDIO "Whether or not to use MiniAudio or default to XAudio." OFF)
 
-set(DEP_PATH windows)
+set(STEAM_API_NODLL 1)
+set(EOS_USE_DLLEXPORT 0)
+set(ORIGINS_COLLISION 0)
 
 message(NOTICE "configuring for the " ${RETRO_SUBSYSTEM} " subsystem")
 
@@ -103,10 +118,19 @@ if(USE_MINIAUDIO)
     target_compile_definitions(RetroEngine PRIVATE RETRO_AUDIODEVICE_MINI=1)
 endif()
 
-target_compile_definitions(RetroEngine PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(RetroEngine PRIVATE
+    _CRT_SECURE_NO_WARNINGS
+    STEAM_API_NODLL=${STEAM_API_NODLL}
+    ORIGINS_COLLISION=${ORIGINS_COLLISION}
+    EOS_USE_DLLEXPORT=${EOS_USE_DLLEXPORT}
+)
 target_link_libraries(RetroEngine
     winmm
     comctl32
+)
+target_include_directories(RetroEngine PRIVATE
+    dependencies/all/steam_sdk
+    dependencies/${DEP_PATH}/S3K
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -117,6 +141,9 @@ target_sources(RetroEngine PRIVATE ${RETRO_NAME}/${RETRO_NAME}.rc)
 
 # Setup Detours
 if(RETRO_MOD_LOADER)
-    target_link_libraries(RetroEngine ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/windows/detours.lib)
+    find_path(DETOURS_INCLUDE_DIRS "detours/detours.h" PATHS dependencies/${DEP_PATH})
+    find_library(DETOURS_LIBRARY detours REQUIRED PATHS dependencies/${DEP_PATH}/detours)
+    target_include_directories(RetroEngine PRIVATE ${DETOURS_INCLUDE_DIR})
+    target_link_libraries(RetroEngine ${DETOURS_LIBRARY})
     set(RETRO_MOD_LOADER_HOOK ON)
 endif()

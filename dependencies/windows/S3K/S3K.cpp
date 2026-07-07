@@ -1,5 +1,5 @@
 #include "RSDK/Core/RetroEngine.hpp"
-#include "main.hpp"
+#include "dllmain.hpp"
 #include "S3K.hpp"
 #include "Helpers.h"
 #include "SigScan.h"
