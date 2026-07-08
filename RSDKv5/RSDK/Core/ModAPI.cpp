@@ -846,6 +846,35 @@ bool32 RSDK::LoadMod(ModInfo *info, const std::string &modsPath, const std::stri
                 }
                 iniparser_freedict(modSettingsIni);
             }
+
+            // LOOPPOINTS
+            const std::string looppoints = modDir + "/Data/Music/looppoints.ini";
+            FileIO *loopFile = fOpen(looppoints.c_str(), "r");
+            if (loopFile) {
+                DrawStatus("Reading loop points...");
+                fClose(loopFile);
+
+                dictionary *ini = iniparser_load(looppoints.c_str());
+                int32 c           = iniparser_getsecnkeys(ini, "looppoints");
+                const char **keys = new const char *[c];
+
+                iniparser_getseckeys(ini, "looppoints", keys);
+                for (int32 m = 0; m < c; ++m) {
+                    info->looppoints.emplace(
+                        std::pair<std::string, int32>(
+                            keys[m],
+                            iniparser_getint(
+                                ini,
+                                keys[m],
+                                -1
+                            )
+                        )
+                    );
+                }
+
+                delete[] keys;
+                iniparser_freedict(ini);
+            }
             // CONFIG
             loadCfg(info, modDir + "/modConfig.cfg");
 

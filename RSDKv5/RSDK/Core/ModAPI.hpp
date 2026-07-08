@@ -240,6 +240,7 @@ struct ModInfo {
     void (*unloadMod)();
     std::map<std::string, std::map<std::string, std::string>> settings;
     std::map<std::string, std::map<std::string, std::string>> config;
+    std::map<std::string, int32> looppoints;
 
     // mapped to base hash
     std::map<uint32 *, ModSVInfo> staticVars;

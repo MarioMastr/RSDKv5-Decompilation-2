@@ -292,6 +292,16 @@ int32 RSDK::PlayStream(const char *filename, uint32 slot, uint32 startPos, uint3
     channel->bufferPos    = 0;
     channel->speed        = speed;
 
+    for (int32 i = 0; i < modList.size(); i++) {
+        ModInfo mod = modList[i];
+        if (!mod.looppoints.empty()) {
+            if (mod.looppoints.find("looppoints:" + std::string(filename))->second != -1) {
+                channel->loop = true;
+                loopPoint = mod.looppoints.find("looppoints:" + std::string(filename))->second;
+            }
+        }
+    }
+
     sprintf_s(streamFilePath, sizeof(streamFilePath), "Data/Music/%s", filename);
     streamStartPos  = startPos;
     streamLoopPoint = loopPoint;
