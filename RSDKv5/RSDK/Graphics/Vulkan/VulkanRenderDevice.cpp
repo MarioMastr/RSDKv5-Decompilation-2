@@ -1,6 +1,6 @@
 #ifdef VK_INTELLISENSE
-#include "RetroEngine.hpp"
-#include "VulkanRenderDevice.hpp"
+#include <RSDK/Core/RetroEngine.hpp>
+using namespace RSDK;
 #endif
 
 #include <set>
