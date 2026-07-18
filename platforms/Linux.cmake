@@ -9,7 +9,7 @@ set(RETRO_SUBSYSTEM "OGL" CACHE STRING "The subsystem to use")
 option(USE_SDL_AUDIO "Whether or not to use SDL for audio instead of the default MiniAudio." OFF)
 
 if(RETRO_USERCORE_ID STREQUAL "1")
-    if(RETRO_ARCH STREQUAL "64")
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
         set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux64")
 
         find_library(STEAM_API_LIB
@@ -18,8 +18,17 @@ if(RETRO_USERCORE_ID STREQUAL "1")
 
             NO_DEFAULT_PATH
         )
-    elseif(RETRO_ARCH STREQUAL "32")
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
         set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linux32")
+
+        find_library(STEAM_API_LIB
+            NAMES steam_api
+            PATHS "${STEAMWORKS_REDIST_BIN}"
+
+            NO_DEFAULT_PATH
+        )
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/linuxarm64")
 
         find_library(STEAM_API_LIB
             NAMES steam_api

@@ -9,6 +9,36 @@ set(DEP_PATH windows)
 
 message(NOTICE "configuring for the " ${RETRO_SUBSYSTEM} " subsystem")
 
+if(RETRO_USERCORE_ID STREQUAL "1")
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/win64")
+
+        find_library(STEAM_API_LIB
+            NAMES steam_api
+            PATHS "${STEAMWORKS_REDIST_BIN}"
+
+            NO_DEFAULT_PATH
+        )
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+        set(STEAMWORKS_REDIST_BIN "${STEAMWORKS_SDK_DIR}/redistributable_bin/")
+
+        find_library(STEAM_API_LIB
+            NAMES steam_api
+            PATHS "${STEAMWORKS_REDIST_BIN}"
+
+            NO_DEFAULT_PATH
+        )
+    endif()
+
+    if(NOT STEAM_API_LIB)
+        message(FATAL_ERROR "Steam API library not found in ${STEAMWORKS_REDIST_BIN}")
+	else()
+		message("found Steam API")
+	endif()
+
+	target_link_libraries(RetroEngine ${STEAM_API_LIB})
+endif()
+
 find_package(Ogg CONFIG)
 
 if(NOT ${Ogg_FOUND})
