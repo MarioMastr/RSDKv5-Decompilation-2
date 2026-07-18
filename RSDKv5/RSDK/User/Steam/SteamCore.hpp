@@ -15,67 +15,22 @@ extern void CheckDLCs();
 extern int32 LanguageValue(const char *steamLang);
 
 struct SteamCore : SKU::UserCore {
-    SteamCore()
-    {
-        CheckDLCs();
-    }
-    void Shutdown()
-    {
-        SteamAPI_Shutdown();
-    }
-    bool32 CheckAPIInitialized()
-    {
-        // check if steam is running
-        return SteamAPI_IsSteamRunning();
-    }
-    bool32 CheckFocusLost()
-    {
-        // return field_38;
-        return focusState != 0;
-    }
-    void FrameInit()
-    {
-        UserCore::StageLoad();
-        SteamAPI_RunCallbacks();
-    }
-    int32 GetUserLanguage()
-    {
-        // gets the language from steam
-        return LanguageValue(SteamApps()->GetCurrentGameLanguage());
-    }
-    int32 GetUserRegion() { return REGION_US; }
-    int32 GetUserPlatform() { return PLATFORM_PC; }
-    bool32 GetConfirmButtonFlip() { return false; }
-    void LaunchManual() {
-        SteamFriends()->ActivateGameOverlayToWebPage("http://www.sonicthehedgehog.com/mania/manual");
-    }
-    void ExitGame() { RenderDevice::isRunning = false; }
-    bool32 CheckDLC(uint8 id)
-    {
-        if (id >= 0 && id <= 8)
-            return EnabledDLC[id];
-        return false;
-    }
-    bool32 IsOverlayEnabled(uint32 overlay)
-    {
-        for (int32 i = 0; i < inputDeviceCount; ++i) {
-            if (inputDeviceList[i] && inputDeviceList[i]->id == overlay) {
-                if (((inputDeviceList[i]->gamepadType >> 16) & 0xFF) != DEVICE_API_STEAM)
-                    return false;
-
-                return false; // not implemented, sorry!
-            }
-        }
-
-        return false;
-    }
-    bool32 ShowExtensionOverlay(uint8 overlay)
-    {
-        SteamFriends()->ActivateGameOverlayToWebPage("https://store.steampowered.com/app/845640/Sonic_Mania__Encore_DLC/");
-        return true;
-    }
-
     bool32 initialized = false;
+
+    SteamCore();
+    void Shutdown();
+    bool32 CheckAPIInitialized();
+    bool32 CheckFocusLost();
+    void FrameInit();
+    int32 GetUserLanguage();
+    int32 GetUserRegion();
+    int32 GetUserPlatform();
+    bool32 GetConfirmButtonFlip();
+    void LaunchManual();
+    void ExitGame();
+    bool32 CheckDLC(uint8 id);
+    bool32 IsOverlayEnabled(uint32 overlay);
+    bool32 ShowExtensionOverlay(uint8 overlay);
 };
 
 SteamCore *InitSteamCore();
