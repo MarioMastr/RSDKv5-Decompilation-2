@@ -1638,7 +1638,8 @@ void RenderDevice::FlipScreen()
 
     vkQueuePresentKHR(presentQueue, &presentInfo);
 
-    frameIndex = (frameIndex + 1) % waitSemaphore.capacity();
+    if (videoSettings.tripleBuffered)
+        frameIndex = (frameIndex + 1) % waitSemaphore.capacity();
 }
 
 void RenderDevice::ReleaseShaderPipelines()
@@ -2028,6 +2029,7 @@ void RenderDevice::RefreshWindow()
     QuerySwapChainDetails(physicalDevice);
 
     descriptorSet[0] = VK_NULL_HANDLE;
+    frameIndex = 0;
 
     if (!InitGraphicsAPI() || !InitShaders())
         return;
