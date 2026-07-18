@@ -214,6 +214,7 @@ GLFWwindow *RenderDevice::CreateGLFWWindow(void)
         PrintLog(PRINT_NORMAL, "ERROR: [GLFW] window creation failed");
         return NULL;
     }
+    glfwShowWindow(win); // window has to be shown first for scaling to be determined properly
     if (videoSettings.windowed) {
         // Center the window
         monitor                 = glfwGetPrimaryMonitor();
@@ -222,12 +223,11 @@ GLFWwindow *RenderDevice::CreateGLFWWindow(void)
         glfwGetMonitorPos(monitor, &x, &y);
         // Get scaling for HiDPI screens
         float xscale, yscale;
-        glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+        glfwGetWindowContentScale(win, &xscale, &yscale);
         int xpos = x + (mode->width - (int)((float)videoSettings.windowWidth * xscale)) / 2;
         int ypos = y + (mode->height - (int)((float)videoSettings.windowHeight * yscale)) / 2;
         glfwSetWindowPos(win, xpos, ypos);
     }
-    glfwShowWindow(win);
     PrintLog(PRINT_NORMAL, "w: %d h: %d windowed: %d", w, h, videoSettings.windowed);
 
     glfwSetKeyCallback(win, ProcessKeyEvent);
@@ -246,8 +246,7 @@ bool RenderDevice::Init()
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE); // HiDPI scaling support
 #if GLFW_VERSION_MAJOR >= 3 && GLFW_VERSION_MINOR >= 4
-    // Disable framebuffer scaling which (surprisingly) makes the framebuffer scale correctly on Wayland
-    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 #endif
 
     if ((window = CreateGLFWWindow()) == NULL)
@@ -556,6 +555,16 @@ bool RenderDevice::InitGraphicsAPI()
     Vector2 lastViewSize;
 
     glfwGetWindowSize(window, &lastViewSize.x, &lastViewSize.y);
+
+    int platform = glfwGetPlatform();
+    if ((platform == GLFW_PLATFORM_WAYLAND || platform == GLFW_PLATFORM_COCOA) && !videoSettings.windowed) {
+        float2 windowScale;
+        glfwGetWindowContentScale(window, &windowScale.x, &windowScale.y);
+
+        lastViewSize.x *= windowScale.x;
+        lastViewSize.y *= windowScale.y;
+    }
+
     Vector2 viewportSize = lastViewSize;
 
     if ((viewSize.x / viewSize.y) <= ((pixelSize.x / pixelSize.y) + 0.1)) {
