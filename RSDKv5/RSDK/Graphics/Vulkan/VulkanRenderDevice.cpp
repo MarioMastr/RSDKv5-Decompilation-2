@@ -274,8 +274,8 @@ bool RenderDevice::SetupRendering()
     appInfo.pApplicationName = "RSDK" ENGINE_V_NAME;
     appInfo.pEngineName      = "RSDK" ENGINE_V_NAME;
     // i aint trying to populate these vers
-    appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-    appInfo.engineVersion      = VK_MAKE_API_VERSION(0, 1, 0, 0);
+    appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 2, 0);
+    appInfo.engineVersion      = VK_MAKE_API_VERSION(0, 1, 2, 0);
     appInfo.apiVersion         = VK_API_VERSION_1_1;
 
     VkInstanceCreateInfo instanceInfo{};
