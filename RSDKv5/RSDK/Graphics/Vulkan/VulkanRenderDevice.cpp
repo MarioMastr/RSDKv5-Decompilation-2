@@ -216,7 +216,7 @@ GLFWwindow *RenderDevice::CreateGLFWWindow(void)
     }
     if (videoSettings.windowed) {
         // Center the window
-        monitor = glfwGetPrimaryMonitor();
+        monitor                 = glfwGetPrimaryMonitor();
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         int x, y;
         glfwGetMonitorPos(monitor, &x, &y);
@@ -338,8 +338,8 @@ bool RenderDevice::SetupRendering()
     callbackInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     callbackInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    callbackInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                               | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    callbackInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     callbackInfo.pfnUserCallback = DebugCallback;
     callbackInfo.pUserData       = nullptr;
 
@@ -870,8 +870,7 @@ bool RenderDevice::InitGraphicsAPI()
 
     for (int32 i = 0; i < framesInFlight; i++) {
         if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &waitSemaphore[i]) != VK_SUCCESS
-            || vkCreateFence(device, &fenceInfo, nullptr, &flightFence[i]) != VK_SUCCESS
-        ) {
+            || vkCreateFence(device, &fenceInfo, nullptr, &flightFence[i]) != VK_SUCCESS) {
             PrintLog(PRINT_ERROR, "[VK] Unable to create fence");
         }
     }
@@ -1436,14 +1435,15 @@ void RenderDevice::FlipScreen()
 
     uint32_t imageIndex;
     VkSemaphore imageAvailableSemaphore = waitSemaphore[frameIndex];
-    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    VkResult result                     = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
     VkSemaphore renderFinishedSemaphore = signalSemaphore[imageIndex];
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         // RefreshWindow();
         return;
-    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         PrintLog(PRINT_NORMAL, "[VK] Failed to acquire swapchain image");
         return;
     }
@@ -1516,7 +1516,8 @@ void RenderDevice::FlipScreen()
         imageInfo.sampler = shaderList[videoSettings.shaderID].linear ? samplerLinear : samplerPoint;
     }
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shaderList[videoSettings.shaderSupport ? videoSettings.shaderID : 0].shaderPipeline);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      shaderList[videoSettings.shaderSupport ? videoSettings.shaderID : 0].shaderPipeline);
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
     VkBuffer vertexBuffers[] = { vertexBuffer };
@@ -1628,12 +1629,12 @@ void RenderDevice::FlipScreen()
     }
 
     VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores    = &renderFinishedSemaphore;
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains     = &swapChain;
-    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.swapchainCount     = 1;
+    presentInfo.pSwapchains        = &swapChain;
+    presentInfo.pImageIndices      = &imageIndex;
 
     vkQueuePresentKHR(presentQueue, &presentInfo);
 
@@ -1706,7 +1707,7 @@ void RenderDevice::Release(bool32 isRefresh)
 
     for (int32 i = 0; i < signalSemaphore.size(); i++) {
         vkDestroySemaphore(device, signalSemaphore[i], nullptr);
-}
+    }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
@@ -1832,7 +1833,7 @@ bool RenderDevice::InitShaders()
     videoSettings.shaderSupport = true;
     int32 maxShaders            = 0;
 #if RETRO_USE_MOD_LOADER
-    shaderCount                 = 0;
+    shaderCount = 0;
 #endif
 
     LoadShader("None", false);
@@ -2240,8 +2241,8 @@ void RenderDevice::ProcessKeyEvent(GLFWwindow *, int32 key, int32 scancode, int3
                     if (engine.devMenu) {
                         sceneInfo.listPos--;
                         while (sceneInfo.listPos < sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetStart
-                            || sceneInfo.listPos > sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetEnd
-                            || !sceneInfo.listCategory[sceneInfo.activeCategory].sceneCount) {
+                               || sceneInfo.listPos > sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetEnd
+                               || !sceneInfo.listCategory[sceneInfo.activeCategory].sceneCount) {
                             sceneInfo.activeCategory--;
                             if (sceneInfo.activeCategory >= sceneInfo.categoryCount) {
                                 sceneInfo.activeCategory = sceneInfo.categoryCount - 1;
@@ -2266,8 +2267,8 @@ void RenderDevice::ProcessKeyEvent(GLFWwindow *, int32 key, int32 scancode, int3
                     if (engine.devMenu) {
                         sceneInfo.listPos++;
                         while (sceneInfo.listPos < sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetStart
-                            || sceneInfo.listPos > sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetEnd
-                            || !sceneInfo.listCategory[sceneInfo.activeCategory].sceneCount) {
+                               || sceneInfo.listPos > sceneInfo.listCategory[sceneInfo.activeCategory].sceneOffsetEnd
+                               || !sceneInfo.listCategory[sceneInfo.activeCategory].sceneCount) {
                             sceneInfo.activeCategory++;
                             if (sceneInfo.activeCategory >= sceneInfo.categoryCount) {
                                 sceneInfo.activeCategory = 0;
