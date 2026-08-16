@@ -214,7 +214,6 @@ GLFWwindow *RenderDevice::CreateGLFWWindow(void)
         PrintLog(PRINT_NORMAL, "ERROR: [GLFW] window creation failed");
         return NULL;
     }
-    glfwShowWindow(win); // window has to be shown first for scaling to be determined properly
     if (videoSettings.windowed) {
         // Center the window
         monitor                 = glfwGetPrimaryMonitor();
@@ -223,11 +222,12 @@ GLFWwindow *RenderDevice::CreateGLFWWindow(void)
         glfwGetMonitorPos(monitor, &x, &y);
         // Get scaling for HiDPI screens
         float xscale, yscale;
-        glfwGetWindowContentScale(win, &xscale, &yscale);
+        glfwGetMonitorContentScale(monitor, &xscale, &yscale);
         int xpos = x + (mode->width - (int)((float)videoSettings.windowWidth * xscale)) / 2;
         int ypos = y + (mode->height - (int)((float)videoSettings.windowHeight * yscale)) / 2;
         glfwSetWindowPos(win, xpos, ypos);
     }
+    glfwShowWindow(win);
     PrintLog(PRINT_NORMAL, "w: %d h: %d windowed: %d", w, h, videoSettings.windowed);
 
     glfwSetKeyCallback(win, ProcessKeyEvent);
@@ -554,26 +554,22 @@ bool RenderDevice::InitGraphicsAPI()
     Vector2 viewportPos{};
     Vector2 lastViewSize;
 
-    glfwGetWindowSize(window, &lastViewSize.x, &lastViewSize.y);
-
-    int platform = glfwGetPlatform();
-    if ((platform == GLFW_PLATFORM_WAYLAND || platform == GLFW_PLATFORM_COCOA) && !videoSettings.windowed) {
-        float2 windowScale;
-        glfwGetWindowContentScale(window, &windowScale.x, &windowScale.y);
-
-        lastViewSize.x *= windowScale.x;
-        lastViewSize.y *= windowScale.y;
-    }
+    if (videoSettings.windowed)
+        glfwGetWindowSize(window, &lastViewSize.x, &lastViewSize.y);
+    else
+        glfwGetFramebufferSize(window, &lastViewSize.x, &lastViewSize.y);
 
     Vector2 viewportSize = lastViewSize;
 
     if ((viewSize.x / viewSize.y) <= ((pixelSize.x / pixelSize.y) + 0.1)) {
         if ((pixAspect - 0.1) > (viewSize.x / viewSize.y)) {
+            viewSize.y     = (pixelSize.y / pixelSize.x) * viewSize.x;
             viewportPos.y  = (lastViewSize.y >> 1) - (viewSize.y * 0.5);
             viewportSize.y = viewSize.y;
         }
     }
     else {
+        viewSize.x     = pixAspect * viewSize.y;
         viewportPos.x  = (lastViewSize.x >> 1) - ((pixAspect * viewSize.y) * 0.5);
         viewportSize.x = (pixAspect * viewSize.y);
     }
